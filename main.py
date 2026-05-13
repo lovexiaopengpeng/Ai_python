@@ -69,6 +69,9 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     username: str
     password: str
+    device_type: Optional[str] = None
+    imei: Optional[str] = None
+    notification_token: Optional[str] = None
 
 def generate_user_id() -> str:
     import random
@@ -182,6 +185,26 @@ def login(req: LoginRequest):
                 }
             )
         
+        if req.device_type == "android" and not req.imei:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "success": False,
+                    "error": "missing_imei",
+                    "message": "安卓设备需要提供IMEI"
+                }
+            )
+        
+        if req.device_type == "ios" and not req.notification_token:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "success": False,
+                    "error": "missing_notification_token",
+                    "message": "iOS设备需要提供通知Token"
+                }
+            )
+        
         cursor.execute("""
             UPDATE users
             SET last_login = CURRENT_TIMESTAMP
@@ -191,7 +214,7 @@ def login(req: LoginRequest):
         
         token = generate_token(user_id, req.username)
         
-        print(f"✅ 用户登录成功: {req.username}, ID: {user_id}")
+        print(f"✅ 用户登录成功: {req.username}, ID: {user_id}, 设备类型: {req.device_type}")
         
         return {
             "success": True,
