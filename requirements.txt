@@ -3,4 +3,3 @@ uvicorn==0.24.0.post1
 pydantic==1.10.14
 PyJWT==2.8.0
 python-multipart==0.0.9
-psycopg2-binary==2.9.9
