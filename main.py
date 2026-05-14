@@ -375,6 +375,34 @@ def verify_token_endpoint(req: TokenRequest):
     finally:
         conn.close()
 
+@app.get("/admin/users", summary="获取所有用户列表")
+def get_all_users():
+    conn = get_db_connection()
+    
+    if DB_TYPE == "postgresql":
+        cursor = conn.cursor()
+    else:
+        cursor = conn.cursor()
+    
+    try:
+        db_execute(cursor, "SELECT user_id, username, email, phone, created_at, last_login FROM users ORDER BY created_at DESC")
+        users = cursor.fetchall()
+        
+        user_list = []
+        for user in users:
+            user_list.append({
+                "user_id": user[0],
+                "username": user[1],
+                "email": user[2],
+                "phone": user[3],
+                "created_at": str(user[4]),
+                "last_login": str(user[5]) if user[5] else None
+            })
+        
+        return {"success": True, "total": len(user_list), "users": user_list}
+    finally:
+        conn.close()
+
 @app.get("/", summary="健康检查")
 def health_check():
     return {"status": "ok", "service": "user-auth-service", "db_type": DB_TYPE}
