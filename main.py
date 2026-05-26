@@ -22,10 +22,10 @@ if DATABASE_URL and DATABASE_URL.startswith("postgresql"):
     except ImportError:
         DB_TYPE = "sqlite"
 
-app = FastAPI(title="用户认证与热点服务", description="提供用户注册、登录和微博热点资讯服务")
+app = FastAPI(title="用户认证与热点服务", description="提供用户注册、登录和热点资讯服务")
 
-from weibo_hot import router as weibo_router
-app.include_router(weibo_router)
+from news_hot import router as news_router
+app.include_router(news_router)
 
 def get_db_connection():
     if DB_TYPE == "postgresql" and DATABASE_URL:
