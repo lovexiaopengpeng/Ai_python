@@ -115,10 +115,6 @@ def get_hot_news(
             }
         )
 
-@router.get("/hot/tech", summary="获取科技热点资讯")
-def get_tech_hot_news():
-    return get_hot_news(type="tech")
-
 @router.get("/types", summary="获取支持的新闻类型")
 def get_news_types():
     types = []
