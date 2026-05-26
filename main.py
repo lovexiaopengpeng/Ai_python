@@ -374,6 +374,37 @@ def get_current_user(authorization: str = Header(None)) -> Dict:
     
     return payload
 
+@app.post("/user/logout", summary="退出登录")
+def logout(current_user: Dict = Depends(get_current_user)):
+    conn = get_db_connection()
+    
+    if DB_TYPE == "postgresql":
+        cursor = conn.cursor()
+    else:
+        cursor = conn.cursor()
+    
+    try:
+        db_execute(cursor, "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = %s", (current_user["user_id"],))
+        conn.commit()
+        
+        print(f"✅ 用户退出登录: {current_user['username']}, ID: {current_user['user_id']}")
+        
+        return {
+            "success": True,
+            "message": "退出登录成功"
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "success": False,
+                "error": "database_error",
+                "message": f"数据库错误: {str(e)}"
+            }
+        )
+    finally:
+        conn.close()
+
 @app.get("/user/profile", summary="获取用户信息")
 def get_user_profile(current_user: Dict = Depends(get_current_user)):
     conn = get_db_connection()
