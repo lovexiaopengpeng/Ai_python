@@ -97,6 +97,7 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     username: str
     password: str
+    timestamp: Optional[str] = None
     device_type: Optional[str] = None
     imei: Optional[str] = None
     notification_token: Optional[str] = None
@@ -263,6 +264,7 @@ def login(req: LoginRequest):
             "user_id": user_id,
             "username": req.username,
             "token": token,
+            "timestamp": req.timestamp,
             "message": "登录成功"
         }
         
@@ -374,8 +376,20 @@ def get_current_user(authorization: str = Header(None)) -> Dict:
     
     return payload
 
+class LogoutRequest(BaseModel):
+    timestamp: Optional[str] = None
+
 @app.post("/user/logout", summary="退出登录")
-def logout(current_user: Dict = Depends(get_current_user)):
+def logout(req: LogoutRequest, current_user: Dict = Depends(get_current_user), userid: str = Header(None, description="用户ID")):
+    if not userid:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "success": False,
+                "message": "请求头中缺少 userid 参数"
+            }
+        )
+    
     conn = get_db_connection()
     
     if DB_TYPE == "postgresql":
@@ -391,6 +405,8 @@ def logout(current_user: Dict = Depends(get_current_user)):
         
         return {
             "success": True,
+            "userid": userid,
+            "timestamp": req.timestamp,
             "message": "退出登录成功"
         }
     except Exception as e:
