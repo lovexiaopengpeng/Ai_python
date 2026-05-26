@@ -52,7 +52,8 @@ def init_database():
             email TEXT,
             phone TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_login TIMESTAMP
+            last_login TIMESTAMP,
+            last_logout TIMESTAMP
         )
     """
     
@@ -121,6 +122,17 @@ def db_execute(cursor, query, params=()):
     else:
         query = query.replace("%s", "?")
         cursor.execute(query, params)
+
+def convert_timestamp(timestamp: str) -> str:
+    import time
+    try:
+        timestamp_float = float(timestamp)
+        if timestamp_float >= 1000000000:
+            local_time = time.localtime(timestamp_float)
+            return time.strftime("%Y-%m-%d %H:%M:%S", local_time)
+    except ValueError:
+        pass
+    return timestamp
 
 @app.post("/register", summary="用户注册")
 def register(req: RegisterRequest):
@@ -252,7 +264,12 @@ def login(req: LoginRequest):
                 }
             )
         
-        db_execute(cursor, "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = %s", (user_id,))
+        login_time = convert_timestamp(req.timestamp) if req.timestamp else None
+        
+        if login_time:
+            db_execute(cursor, "UPDATE users SET last_login = %s WHERE user_id = %s", (login_time, user_id))
+        else:
+            db_execute(cursor, "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = %s", (user_id,))
         conn.commit()
         
         token = generate_token(user_id, req.username)
@@ -264,7 +281,7 @@ def login(req: LoginRequest):
             "user_id": user_id,
             "username": req.username,
             "token": token,
-            "timestamp": req.timestamp,
+            "timestamp": login_time,
             "message": "登录成功"
         }
         
@@ -398,7 +415,12 @@ def logout(req: LogoutRequest, current_user: Dict = Depends(get_current_user), u
         cursor = conn.cursor()
     
     try:
-        db_execute(cursor, "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = %s", (current_user["user_id"],))
+        logout_time = convert_timestamp(req.timestamp) if req.timestamp else None
+        
+        if logout_time:
+            db_execute(cursor, "UPDATE users SET last_logout = %s WHERE user_id = %s", (logout_time, current_user["user_id"]))
+        else:
+            db_execute(cursor, "UPDATE users SET last_logout = CURRENT_TIMESTAMP WHERE user_id = %s", (current_user["user_id"],))
         conn.commit()
         
         print(f"✅ 用户退出登录: {current_user['username']}, ID: {current_user['user_id']}")
@@ -406,7 +428,7 @@ def logout(req: LogoutRequest, current_user: Dict = Depends(get_current_user), u
         return {
             "success": True,
             "userid": userid,
-            "timestamp": req.timestamp,
+            "timestamp": logout_time,
             "message": "退出登录成功"
         }
     except Exception as e:
