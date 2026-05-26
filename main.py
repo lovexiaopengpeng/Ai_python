@@ -98,6 +98,11 @@ class LoginRequest(BaseModel):
     imei: Optional[str] = None
     notification_token: Optional[str] = None
 
+class ResetPasswordRequest(BaseModel):
+    username: str
+    old_password: str
+    new_password: str
+
 def generate_user_id() -> str:
     import random
     return str(random.randint(1000, 999999))
@@ -252,6 +257,76 @@ def login(req: LoginRequest):
             "username": req.username,
             "token": token,
             "message": "登录成功"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "success": False,
+                "error": "database_error",
+                "message": f"数据库错误: {str(e)}"
+            }
+        )
+    finally:
+        conn.close()
+
+@app.post("/reset-password", summary="重置密码")
+def reset_password(req: ResetPasswordRequest):
+    if not req.new_password or len(req.new_password) < 6:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "success": False,
+                "error": "password_too_short",
+                "message": "新密码长度至少为6个字符"
+            }
+        )
+    
+    conn = get_db_connection()
+    
+    if DB_TYPE == "postgresql":
+        cursor = conn.cursor()
+    else:
+        cursor = conn.cursor()
+    
+    try:
+        db_execute(cursor, "SELECT user_id, username, password FROM users WHERE username = %s", (req.username,))
+        
+        user = cursor.fetchone()
+        
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "success": False,
+                    "error": "user_not_found",
+                    "message": "用户名不存在"
+                }
+            )
+        
+        user_id, stored_username, stored_password = user
+        
+        if req.old_password != stored_password:
+            raise HTTPException(
+                status_code=401,
+                detail={
+                    "success": False,
+                    "error": "wrong_password",
+                    "message": "原密码错误"
+                }
+            )
+        
+        db_execute(cursor, "UPDATE users SET password = %s WHERE user_id = %s", (req.new_password, user_id))
+        conn.commit()
+        
+        print(f"✅ 用户密码重置成功: {req.username}, ID: {user_id}")
+        
+        return {
+            "success": True,
+            "message": "密码重置成功"
         }
         
     except HTTPException:
