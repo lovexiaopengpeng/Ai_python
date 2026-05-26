@@ -103,6 +103,10 @@ class ResetPasswordRequest(BaseModel):
     old_password: str
     new_password: str
 
+class DeleteAccountRequest(BaseModel):
+    username: str
+    password: str
+
 def generate_user_id() -> str:
     import random
     return str(random.randint(1000, 999999))
@@ -400,6 +404,66 @@ def get_user_profile(current_user: Dict = Depends(get_current_user)):
             }
         }
         
+    finally:
+        conn.close()
+
+@app.post("/user/delete", summary="注销用户账户")
+def delete_user(req: DeleteAccountRequest):
+    conn = get_db_connection()
+    
+    if DB_TYPE == "postgresql":
+        cursor = conn.cursor()
+    else:
+        cursor = conn.cursor()
+    
+    try:
+        db_execute(cursor, "SELECT user_id, username, password FROM users WHERE username = %s", (req.username,))
+        
+        user = cursor.fetchone()
+        
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "success": False,
+                    "error": "user_not_found",
+                    "message": "用户名不存在"
+                }
+            )
+        
+        user_id, stored_username, stored_password = user
+        
+        if req.password != stored_password:
+            raise HTTPException(
+                status_code=401,
+                detail={
+                    "success": False,
+                    "error": "wrong_password",
+                    "message": "密码错误"
+                }
+            )
+        
+        db_execute(cursor, "DELETE FROM users WHERE user_id = %s", (user_id,))
+        conn.commit()
+        
+        print(f"✅ 用户账户已注销: {req.username}, ID: {user_id}")
+        
+        return {
+            "success": True,
+            "message": "账户注销成功"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "success": False,
+                "error": "database_error",
+                "message": f"数据库错误: {str(e)}"
+            }
+        )
     finally:
         conn.close()
 
