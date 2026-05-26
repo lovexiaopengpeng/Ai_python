@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Header
 from pydantic import BaseModel
 from typing import List, Optional
 import datetime
@@ -92,8 +92,18 @@ def fetch_news_by_type(news_type: str) -> List[HotNews]:
 
 @router.get("/hot", summary="获取热点资讯")
 def get_hot_news(
-    type: str = Query("tech", description="新闻类型: tech(科技), finance(财经), entertainment(娱乐), sports(体育), auto(汽车), health(健康)")
+    type: str = Query("tech", description="新闻类型: tech(科技), finance(财经), entertainment(娱乐), sports(体育), auto(汽车), health(健康)"),
+    userid: str = Header(None, description="用户ID，必须在请求头中传递")
 ):
+    if not userid:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "success": False,
+                "message": "请求头中缺少 userid 参数"
+            }
+        )
+    
     try:
         news = fetch_news_by_type(type)
         source_info = NEWS_SOURCES.get(type, {"name": type})
@@ -103,6 +113,7 @@ def get_hot_news(
             "count": len(news),
             "type": type,
             "type_name": source_info["name"],
+            "userid": userid,
             "data": news,
             "message": f"获取{source_info['name']}热点成功"
         }
