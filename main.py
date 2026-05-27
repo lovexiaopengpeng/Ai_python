@@ -27,6 +27,9 @@ app = FastAPI(title="用户认证与热点服务", description="提供用户注�
 from news_hot import router as news_router
 app.include_router(news_router)
 
+from cn_stock import router as stock_router
+app.include_router(stock_router)
+
 def get_db_connection():
     if DB_TYPE == "postgresql" and DATABASE_URL:
         try:
