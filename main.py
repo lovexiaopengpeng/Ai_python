@@ -30,6 +30,9 @@ app.include_router(news_router)
 from cn_stock import router as stock_router
 app.include_router(stock_router)
 
+from crypto import router as crypto_router
+app.include_router(crypto_router)
+
 def get_db_connection():
     if DB_TYPE == "postgresql" and DATABASE_URL:
         try:
