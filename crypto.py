@@ -463,11 +463,25 @@ def get_top_100_coins(userid: str = Header(None)):
             detail={"success": False, "message": f"获取虚拟币排名数据失败: {str(e)}"}
         )
     
+    buy_recommend = [coin for coin in coins if coin["buy_signal"]["buy"]]
+    not_recommend = [coin for coin in coins if not coin["buy_signal"]["buy"]]
+    
+    buy_recommend.sort(key=lambda x: x["buy_signal"]["score"], reverse=True)
+    not_recommend.sort(key=lambda x: x["buy_signal"]["score"], reverse=True)
+    
     return {
         "success": True,
         "count": len(coins),
         "userid": userid,
         "data": coins,
+        "buy_recommend": {
+            "count": len(buy_recommend),
+            "data": buy_recommend
+        },
+        "not_recommend": {
+            "count": len(not_recommend),
+            "data": not_recommend
+        },
         "message": "获取虚拟币排名前100成功",
         "update_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
