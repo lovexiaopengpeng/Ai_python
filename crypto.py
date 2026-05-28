@@ -355,67 +355,7 @@ def calculate_buy_signal(change_24h, change_7d, change_30d, volume_24h_usd, mark
         return {"buy": False, "confidence": "very_low", "score": score, "reasons": reasons, "risk_level": "high"}
 
 def get_fallback_top_100():
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    fallback_raw = [
-        {"rank": 1, "symbol": "BTC", "name": "Bitcoin", "price_usd": 75500, "market_cap_usd": 1510000000000, "volume_24h_usd": 35000000000, "change_24h": -1.5, "change_7d": 2.3, "change_30d": 5.8, "id": "bitcoin"},
-        {"rank": 2, "symbol": "ETH", "name": "Ethereum", "price_usd": 2070, "market_cap_usd": 250000000000, "volume_24h_usd": 15000000000, "change_24h": -1.2, "change_7d": 1.8, "change_30d": 4.2, "id": "ethereum"},
-        {"rank": 3, "symbol": "USDT", "name": "Tether", "price_usd": 1, "market_cap_usd": 189000000000, "volume_24h_usd": 65000000000, "change_24h": 0.0, "change_7d": 0.1, "change_30d": 0.0, "id": "tether"},
-        {"rank": 4, "symbol": "BNB", "name": "BNB", "price_usd": 650, "market_cap_usd": 88000000000, "volume_24h_usd": 1100000000, "change_24h": -0.8, "change_7d": 3.5, "change_30d": 8.2, "id": "binancecoin"},
-        {"rank": 5, "symbol": "XRP", "name": "XRP", "price_usd": 1.32, "market_cap_usd": 82000000000, "volume_24h_usd": 1500000000, "change_24h": -1.3, "change_7d": 0.5, "change_30d": -2.1, "id": "ripple"},
-        {"rank": 6, "symbol": "USDC", "name": "USDC", "price_usd": 1, "market_cap_usd": 35000000000, "volume_24h_usd": 5000000000, "change_24h": 0.0, "change_7d": 0.0, "change_30d": 0.0, "id": "usd-coin"},
-        {"rank": 7, "symbol": "SOL", "name": "Solana", "price_usd": 178, "market_cap_usd": 75000000000, "volume_24h_usd": 2500000000, "change_24h": 2.5, "change_7d": 8.2, "change_30d": 15.5, "id": "solana"},
-        {"rank": 8, "symbol": "DOGE", "name": "Dogecoin", "price_usd": 0.125, "market_cap_usd": 17500000000, "volume_24h_usd": 800000000, "change_24h": 0.8, "change_7d": -2.3, "change_30d": -5.2, "id": "dogecoin"},
-        {"rank": 9, "symbol": "TRX", "name": "TRON", "price_usd": 0.118, "market_cap_usd": 12000000000, "volume_24h_usd": 450000000, "change_24h": -0.5, "change_7d": 1.2, "change_30d": 3.8, "id": "tron"},
-        {"rank": 10, "symbol": "SHIB", "name": "Shiba Inu", "price_usd": 0.0000123, "market_cap_usd": 8500000000, "volume_24h_usd": 320000000, "change_24h": 1.5, "change_7d": -3.2, "change_30d": -8.5, "id": "shiba-inu"},
-        {"rank": 11, "symbol": "AVAX", "name": "Avalanche", "price_usd": 35.8, "market_cap_usd": 14500000000, "volume_24h_usd": 450000000, "change_24h": -2.1, "change_7d": -4.5, "change_30d": -12.3, "id": "avalanche-2"},
-        {"rank": 12, "symbol": "LINK", "name": "Chainlink", "price_usd": 14.2, "market_cap_usd": 8800000000, "volume_24h_usd": 280000000, "change_24h": -1.8, "change_7d": -3.2, "change_30d": -6.8, "id": "chainlink"},
-        {"rank": 13, "symbol": "ZEC", "name": "Zcash", "price_usd": 48.5, "market_cap_usd": 1200000000, "volume_24h_usd": 45000000, "change_24h": -8.5, "change_7d": -12.3, "change_30d": -18.5, "id": "zcash"},
-        {"rank": 14, "symbol": "MATIC", "name": "Polygon", "price_usd": 0.85, "market_cap_usd": 9200000000, "volume_24h_usd": 380000000, "change_24h": 0.5, "change_7d": 2.1, "change_30d": 5.2, "id": "matic-network"},
-        {"rank": 15, "symbol": "ADA", "name": "Cardano", "price_usd": 0.48, "market_cap_usd": 16200000000, "volume_24h_usd": 320000000, "change_24h": -1.2, "change_7d": -2.8, "change_30d": -5.5, "id": "cardano"},
-        {"rank": 16, "symbol": "DOT", "name": "Polkadot", "price_usd": 7.85, "market_cap_usd": 9200000000, "volume_24h_usd": 180000000, "change_24h": -0.8, "change_7d": 1.5, "change_30d": 3.2, "id": "polkadot"},
-        {"rank": 17, "symbol": "LTC", "name": "Litecoin", "price_usd": 78.5, "market_cap_usd": 5800000000, "volume_24h_usd": 420000000, "change_24h": -1.5, "change_7d": 0.8, "change_30d": 4.5, "id": "litecoin"},
-        {"rank": 18, "symbol": "BCH", "name": "Bitcoin Cash", "price_usd": 285, "market_cap_usd": 5600000000, "volume_24h_usd": 280000000, "change_24h": -2.2, "change_7d": -1.8, "change_30d": -4.5, "id": "bitcoin-cash"},
-        {"rank": 19, "symbol": "XLM", "name": "Stellar", "price_usd": 0.125, "market_cap_usd": 2800000000, "volume_24h_usd": 85000000, "change_24h": -0.5, "change_7d": 1.2, "change_30d": 2.8, "id": "stellar"},
-        {"rank": 20, "symbol": "TON", "name": "Toncoin", "price_usd": 2.35, "market_cap_usd": 7500000000, "volume_24h_usd": 120000000, "change_24h": -1.8, "change_7d": -3.5, "change_30d": -7.2, "id": "toncoin"},
-    ]
-    
-    coins = []
-    for item in fallback_raw:
-        rank = item["rank"]
-        change_24h = item["change_24h"]
-        change_7d = item["change_7d"]
-        change_30d = item["change_30d"]
-        volume_24h_usd = item["volume_24h_usd"]
-        market_cap_usd = item["market_cap_usd"]
-        price_usd = item["price_usd"]
-        
-        buy_signal = calculate_buy_signal(change_24h, change_7d, change_30d, volume_24h_usd, market_cap_usd, price_usd, rank)
-        
-        price_fmt = f"${price_usd:,.2f}" if price_usd else "$0.00"
-        market_cap_fmt = f"${market_cap_usd:,.0f}" if market_cap_usd else "$0"
-        volume_fmt = f"${volume_24h_usd:,.0f}" if volume_24h_usd else "$0"
-        
-        coins.append({
-            "rank": rank,
-            "symbol": item["symbol"],
-            "name": item["name"],
-            "price": price_fmt,
-            "price_usd": price_usd,
-            "market_cap": market_cap_fmt,
-            "market_cap_usd": market_cap_usd,
-            "volume_24h": volume_fmt,
-            "volume_24h_usd": volume_24h_usd,
-            "change_24h": f"{change_24h:+.2f}%",
-            "change_7d": f"{change_7d:+.2f}%",
-            "change_30d": f"{change_30d:+.2f}%",
-            "circulating_supply": 0,
-            "max_supply": 0,
-            "buy_signal": buy_signal,
-            "platform": "Fallback",
-            "time": now,
-            "url": f"https://www.coingecko.com/en/coins/{item['id']}"
-        })
-    return coins
+    return None
 
 def fetch_top_100_coins():
     url = "https://api.coingecko.com/api/v3/coins/markets"
@@ -476,11 +416,11 @@ def fetch_top_100_coins():
                 print(f"Error processing item {idx}: {item_e}")
                 continue
         
-        return coins if coins else get_fallback_top_100()
+        return coins if coins else []
     
     except Exception as e:
         print(f"CoinGecko API error for top 100: {e}")
-        return get_fallback_top_100()
+        return []
 
 @router.get("/top-100", summary="获取排名前100的虚拟币")
 def get_top_100_coins(userid: str = Header(None)):
@@ -522,3 +462,68 @@ def get_top_100_coins(userid: str = Header(None)):
         "message": "获取虚拟币排名前100成功",
         "update_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
+
+
+@router.get("/coin/{symbol}", summary="查询特定虚拟币详情")
+def get_coin_detail(
+    symbol: str,
+    userid: str = Header(None)
+):
+    if not userid:
+        raise HTTPException(status_code=400, detail={"success": False, "message": "请求头中缺少 userid 参数"})
+    
+    symbol = symbol.upper()
+    
+    try:
+        url = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids={symbol.lower()}&order=market_cap_desc&per_page=1&page=1&sparkline=false&price_change_percentage=24h%2C7d%2C30d"
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if data and len(data) > 0:
+                item = data[0]
+                rank = item.get("market_cap_rank", 0)
+                change_24h = item.get("price_change_percentage_24h", 0)
+                change_7d = item.get("price_change_percentage_7d", 0)
+                change_30d = item.get("price_change_percentage_30d", 0)
+                volume_24h_usd = item.get("total_volume", 0)
+                market_cap_usd = item.get("market_cap", 0)
+                price_usd = item.get("current_price", 0)
+                
+                buy_signal = calculate_buy_signal(change_24h, change_7d, change_30d, volume_24h_usd, market_cap_usd, price_usd, rank)
+                
+                price_fmt = f"${price_usd:,.2f}" if price_usd else "$0.00"
+                market_cap_fmt = f"${market_cap_usd:,.0f}" if market_cap_usd else "$0"
+                volume_fmt = f"${volume_24h_usd:,.0f}" if volume_24h_usd else "$0"
+                
+                return {
+                    "success": True,
+                    "symbol": symbol,
+                    "name": item.get("name", ""),
+                    "price": price_fmt,
+                    "price_usd": price_usd,
+                    "market_cap": market_cap_fmt,
+                    "market_cap_usd": market_cap_usd,
+                    "volume_24h": volume_fmt,
+                    "volume_24h_usd": volume_24h_usd,
+                    "change_24h": f"{change_24h:+.2f}%",
+                    "change_7d": f"{change_7d:+.2f}%",
+                    "change_30d": f"{change_30d:+.2f}%",
+                    "rank": rank,
+                    "circulating_supply": item.get("circulating_supply", 0),
+                    "max_supply": item.get("max_supply", 0),
+                    "high_24h": f"${item.get('high_24h', 0):,.2f}",
+                    "low_24h": f"${item.get('low_24h', 0):,.2f}",
+                    "buy_signal": buy_signal,
+                    "platform": "CoinGecko",
+                    "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "url": f"https://www.coingecko.com/en/coins/{item.get('id', '')}",
+                    "userid": userid
+                }
+        
+        raise HTTPException(status_code=404, detail={"success": False, "message": f"未找到虚拟币: {symbol}"})
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching coin detail: {e}")
+        raise HTTPException(status_code=500, detail={"success": False, "message": "获取虚拟币详情失败"})
