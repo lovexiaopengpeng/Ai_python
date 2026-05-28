@@ -1,6 +1,22 @@
 from fastapi import APIRouter, HTTPException, Header
+from pydantic import BaseModel
 import requests
 import datetime
+import sqlite3
+import os
+
+# 简化的数据库连接函数，避免复杂的导入
+def get_db_connection():
+    # 使用与 main.py 相同的数据库路径
+    db_path = os.path.join(os.path.dirname(__file__), "user_database.db")
+    return sqlite3.connect(db_path)
+
+DB_TYPE = "sqlite"
+
+def db_execute(cursor, query, params=()):
+    # 对于 SQLite，将 %s 替换为 ?
+    query = query.replace("%s", "?")
+    cursor.execute(query, params)
 
 router = APIRouter(prefix="/crypto", tags=["虚拟币大额交易"])
 
@@ -527,3 +543,105 @@ def get_coin_detail(
     except Exception as e:
         print(f"Error fetching coin detail: {e}")
         raise HTTPException(status_code=500, detail={"success": False, "message": "获取虚拟币详情失败"})
+
+
+class FavoriteRequest(BaseModel):
+    symbol: str
+    name: str = ""
+
+
+@router.post("/favorites", summary="收藏虚拟币")
+def add_favorite(req: FavoriteRequest, userid: str = Header(None)):
+    if not userid:
+        raise HTTPException(status_code=400, detail={"success": False, "message": "请求头中缺少 userid 参数"})
+    
+    conn = get_db_connection()
+    
+    if DB_TYPE == "postgresql":
+        cursor = conn.cursor()
+    else:
+        cursor = conn.cursor()
+    
+    try:
+        # 先检查是否已经收藏
+        db_execute(cursor, "SELECT id FROM crypto_favorites WHERE user_id = %s AND symbol = %s", (userid, req.symbol.upper()))
+        existing = cursor.fetchone()
+        
+        if existing:
+            return {"success": True, "message": "该虚拟币已经收藏"}
+        
+        # 添加收藏
+        db_execute(cursor, "INSERT INTO crypto_favorites (user_id, symbol, name) VALUES (%s, %s, %s)",
+                       (userid, req.symbol.upper(), req.name))
+        conn.commit()
+        
+        print(f"✅ 用户 {userid} 收藏虚拟币: {req.symbol.upper()}")
+        
+        return {"success": True, "message": "收藏成功"}
+        
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail={"success": False, "message": f"收藏失败: {str(e)}"})
+    finally:
+        conn.close()
+
+
+@router.delete("/favorites/{symbol}", summary="取消收藏虚拟币")
+def remove_favorite(symbol: str, userid: str = Header(None)):
+    if not userid:
+        raise HTTPException(status_code=400, detail={"success": False, "message": "请求头中缺少 userid 参数"})
+    
+    conn = get_db_connection()
+    
+    if DB_TYPE == "postgresql":
+        cursor = conn.cursor()
+    else:
+        cursor = conn.cursor()
+    
+    try:
+        db_execute(cursor, "DELETE FROM crypto_favorites WHERE user_id = %s AND symbol = %s", (userid, symbol.upper()))
+        conn.commit()
+        
+        if cursor.rowcount > 0:
+            print(f"✅ 用户 {userid} 取消收藏虚拟币: {symbol.upper()}")
+            return {"success": True, "message": "取消收藏成功"}
+        else:
+            return {"success": True, "message": "该虚拟币未在收藏列表中"}
+        
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail={"success": False, "message": f"取消收藏失败: {str(e)}"})
+    finally:
+        conn.close()
+
+
+@router.get("/favorites", summary="获取收藏的虚拟币列表")
+def get_favorites(userid: str = Header(None)):
+    if not userid:
+        raise HTTPException(status_code=400, detail={"success": False, "message": "请求头中缺少 userid 参数"})
+    
+    conn = get_db_connection()
+    
+    if DB_TYPE == "postgresql":
+        cursor = conn.cursor()
+    else:
+        cursor = conn.cursor()
+    
+    try:
+        db_execute(cursor, "SELECT symbol, name, created_at FROM crypto_favorites WHERE user_id = %s ORDER BY created_at DESC", (userid,))
+        favorites = cursor.fetchall()
+        
+        favorite_list = []
+        for fav in favorites:
+            favorite_list.append({
+                "symbol": fav[0],
+                "name": fav[1],
+                "created_at": str(fav[2])
+            })
+        
+        return {"success": True, "count": len(favorite_list), "favorites": favorite_list}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={"success": False, "message": f"获取收藏列表失败: {str(e)}"})
+    finally:
+        conn.close()

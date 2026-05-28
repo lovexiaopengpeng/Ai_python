@@ -63,8 +63,34 @@ def init_database():
         )
     """
     
+    create_favorites_table_sql = """
+        CREATE TABLE IF NOT EXISTS crypto_favorites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            symbol TEXT NOT NULL,
+            name TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, symbol)
+        )
+    """
+    
     try:
         cursor.execute(create_table_sql)
+        if DB_TYPE == "postgresql":
+            # PostgreSQL 版本的收藏表创建语句
+            create_favorites_table_sql_postgres = """
+                CREATE TABLE IF NOT EXISTS crypto_favorites (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    symbol TEXT NOT NULL,
+                    name TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(user_id, symbol)
+                )
+            """
+            cursor.execute(create_favorites_table_sql_postgres)
+        else:
+            cursor.execute(create_favorites_table_sql)
         conn.commit()
         print(f"✅ 用户数据库初始化完成 ({DB_TYPE})")
     except Exception as e:

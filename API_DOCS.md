@@ -563,6 +563,115 @@ curl -X GET https://ai-python-3x1q.onrender.com/crypto/coin/ETH -H "userid: 2856
 
 ---
 
+### 4. 收藏虚拟币
+
+**接口地址**: `POST /crypto/favorites`
+
+**功能描述**: 收藏指定的虚拟币
+
+**请求头**:
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| userid | string | 是 | 用户ID |
+
+**请求体**:
+```json
+{
+    "symbol": "BTC",
+    "name": "Bitcoin"
+}
+```
+
+**响应示例**:
+```json
+{
+    "success": true,
+    "message": "收藏成功"
+}
+```
+
+**使用示例**:
+```bash
+# 收藏比特币
+curl -X POST https://ai-python-3x1q.onrender.com/crypto/favorites \
+    -H "Content-Type: application/json" \
+    -H "userid: 285617" \
+    -d '{"symbol": "BTC", "name": "Bitcoin"}'
+```
+
+---
+
+### 5. 取消收藏虚拟币
+
+**接口地址**: `DELETE /crypto/favorites/{symbol}`
+
+**功能描述**: 取消收藏指定的虚拟币
+
+**路径参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| symbol | string | 是 | 虚拟币符号 |
+
+**请求头**:
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| userid | string | 是 | 用户ID |
+
+**响应示例**:
+```json
+{
+    "success": true,
+    "message": "取消收藏成功"
+}
+```
+
+**使用示例**:
+```bash
+# 取消收藏比特币
+curl -X DELETE https://ai-python-3x1q.onrender.com/crypto/favorites/BTC -H "userid: 285617"
+```
+
+---
+
+### 6. 获取收藏的虚拟币列表
+
+**接口地址**: `GET /crypto/favorites`
+
+**功能描述**: 获取当前用户收藏的所有虚拟币
+
+**请求头**:
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| userid | string | 是 | 用户ID |
+
+**响应示例**:
+```json
+{
+    "success": true,
+    "count": 2,
+    "favorites": [
+        {
+            "symbol": "BTC",
+            "name": "Bitcoin",
+            "created_at": "2026-05-28 10:30:00"
+        },
+        {
+            "symbol": "ETH",
+            "name": "Ethereum",
+            "created_at": "2026-05-28 11:00:00"
+        }
+    ]
+}
+```
+
+**使用示例**:
+```bash
+# 获取收藏列表
+curl -X GET https://ai-python-3x1q.onrender.com/crypto/favorites -H "userid: 285617"
+```
+
+---
+
 ## 响应状态码
 
 | 状态码 | 说明 | 典型场景 |
