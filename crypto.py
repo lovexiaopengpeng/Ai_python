@@ -356,7 +356,7 @@ def calculate_buy_signal(change_24h, change_7d, change_30d, volume_24h_usd, mark
 
 def get_fallback_top_100():
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    fallback_data = [
+    fallback_raw = [
         {"rank": 1, "symbol": "BTC", "name": "Bitcoin", "price_usd": 75500, "market_cap_usd": 1510000000000, "volume_24h_usd": 35000000000, "change_24h": -1.5, "change_7d": 2.3, "change_30d": 5.8, "id": "bitcoin"},
         {"rank": 2, "symbol": "ETH", "name": "Ethereum", "price_usd": 2070, "market_cap_usd": 250000000000, "volume_24h_usd": 15000000000, "change_24h": -1.2, "change_7d": 1.8, "change_30d": 4.2, "id": "ethereum"},
         {"rank": 3, "symbol": "USDT", "name": "Tether", "price_usd": 1, "market_cap_usd": 189000000000, "volume_24h_usd": 65000000000, "change_24h": 0.0, "change_7d": 0.1, "change_30d": 0.0, "id": "tether"},
@@ -378,7 +378,44 @@ def get_fallback_top_100():
         {"rank": 19, "symbol": "XLM", "name": "Stellar", "price_usd": 0.125, "market_cap_usd": 2800000000, "volume_24h_usd": 85000000, "change_24h": -0.5, "change_7d": 1.2, "change_30d": 2.8, "id": "stellar"},
         {"rank": 20, "symbol": "TON", "name": "Toncoin", "price_usd": 2.35, "market_cap_usd": 7500000000, "volume_24h_usd": 120000000, "change_24h": -1.8, "change_7d": -3.5, "change_30d": -7.2, "id": "toncoin"},
     ]
-    return fallback_data
+    
+    coins = []
+    for item in fallback_raw:
+        rank = item["rank"]
+        change_24h = item["change_24h"]
+        change_7d = item["change_7d"]
+        change_30d = item["change_30d"]
+        volume_24h_usd = item["volume_24h_usd"]
+        market_cap_usd = item["market_cap_usd"]
+        price_usd = item["price_usd"]
+        
+        buy_signal = calculate_buy_signal(change_24h, change_7d, change_30d, volume_24h_usd, market_cap_usd, price_usd, rank)
+        
+        price_fmt = f"${price_usd:,.2f}" if price_usd else "$0.00"
+        market_cap_fmt = f"${market_cap_usd:,.0f}" if market_cap_usd else "$0"
+        volume_fmt = f"${volume_24h_usd:,.0f}" if volume_24h_usd else "$0"
+        
+        coins.append({
+            "rank": rank,
+            "symbol": item["symbol"],
+            "name": item["name"],
+            "price": price_fmt,
+            "price_usd": price_usd,
+            "market_cap": market_cap_fmt,
+            "market_cap_usd": market_cap_usd,
+            "volume_24h": volume_fmt,
+            "volume_24h_usd": volume_24h_usd,
+            "change_24h": f"{change_24h:+.2f}%",
+            "change_7d": f"{change_7d:+.2f}%",
+            "change_30d": f"{change_30d:+.2f}%",
+            "circulating_supply": 0,
+            "max_supply": 0,
+            "buy_signal": buy_signal,
+            "platform": "Fallback",
+            "time": now,
+            "url": f"https://www.coingecko.com/en/coins/{item['id']}"
+        })
+    return coins
 
 def fetch_top_100_coins():
     url = "https://api.coingecko.com/api/v3/coins/markets"
