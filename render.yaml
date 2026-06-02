@@ -3,7 +3,7 @@ services:
     name: user-auth-service
     env: python
     plan: starter
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && playwright install chromium
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: SECRET_KEY
@@ -12,6 +12,8 @@ services:
         fromDatabase:
           name: user-db
           property: connectionString
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: 0
 databases:
   - name: user-db
     databaseName: userdb

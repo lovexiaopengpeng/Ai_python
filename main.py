@@ -36,9 +36,6 @@ app.include_router(crypto_router)
 from wechat_robot import router as wechat_router
 app.include_router(wechat_router)
 
-from weather_robot import router as weather_router
-app.include_router(weather_router)
-
 def get_db_connection():
     if DB_TYPE == "postgresql" and DATABASE_URL:
         try:
