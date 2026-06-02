@@ -664,67 +664,6 @@ def crawl_weather_from_website(location: str) -> dict:
         print(f"[DEBUG] DashScope获取天气失败: {e}")
         raise
 
-def parse_temperature(text: str) -> str:
-    """从文本中解析当前温度"""
-    import re
-    match = re.search(r'当前温度[：:].*?(\d+)°C', text)
-    if match:
-        return f"{match.group(1)}°C"
-    match = re.search(r'(\d+)°C', text)
-    if match:
-        return f"{match.group(1)}°C"
-    return "未知"
-
-def parse_temperature_range(text: str) -> str:
-    """从文本中解析温度范围"""
-    import re
-    match = re.search(r'(\d+)°C\s*/\s*(\d+)°C', text)
-    if match:
-        return f"{match.group(2)}°C ~ {match.group(1)}°C"
-    return "未知"
-
-def parse_weather(text: str) -> str:
-    """从文本中解析天气状况"""
-    keywords = ['晴', '多云', '阴', '小雨', '中雨', '大雨', '暴雨', '雷阵雨', 
-                '小雪', '中雪', '大雪', '雨夹雪', '雾', '霾', '阵雨', '晴转多云']
-    for kw in keywords:
-        if f"天气状况：{kw}" in text or f"天气状况: {kw}" in text:
-            return kw
-    for kw in keywords:
-        if kw in text:
-            return kw
-    return "未知"
-
-def parse_humidity(text: str) -> str:
-    """从文本中解析湿度"""
-    import re
-    match = re.search(r'湿度[：:].*?(\d+)%', text)
-    if match:
-        return f"{match.group(1)}%"
-    match = re.search(r'(\d+)%', text)
-    if match:
-        return f"{match.group(1)}%"
-    return "未知"
-
-def parse_wind(text: str) -> str:
-    """从文本中解析风力风向"""
-    import re
-    match = re.search(r'风力[：:].*?(\d+级.*?风|风.*?\d+级)', text)
-    if match:
-        return match.group(1)
-    match = re.search(r'(\d+级\s*[东南西北]+风|[东南西北]+风\s*\d+级)', text)
-    if match:
-        return match.group(1)
-    return "未知"
-
-def parse_aqi(text: str) -> str:
-    """从文本中解析空气质量"""
-    import re
-    match = re.search(r'空气质量[：:].*?(\d+)\s*(\S+)', text)
-    if match:
-        return f"{match.group(1)} {match.group(2)}"
-    return "未知"
-
 def crawl_weather_simple(location: str) -> dict:
     """
     简单的天气获取方案（使用requests直接请求）
