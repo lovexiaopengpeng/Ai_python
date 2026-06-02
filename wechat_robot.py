@@ -1418,5 +1418,40 @@ def test_weather():
             "error": str(e)
         }
 
+@router.post("/weather/cancel-all", summary="取消所有天气播报定时任务")
+def cancel_all_weather_jobs():
+    """
+    取消所有天气播报定时任务
+    """
+    try:
+        removed_jobs = []
+        
+        if scheduler is not None:
+            for job in scheduler.get_jobs():
+                if "weather" in job.id:
+                    try:
+                        scheduler.remove_job(job.id)
+                        removed_jobs.append(job.id)
+                        print(f"✅ 已取消任务: {job.id}")
+                    except Exception as e:
+                        print(f"❌ 取消任务失败 {job.id}: {e}")
+            
+            try:
+                scheduler.remove_job("weather_report_daily")
+            except:
+                pass
+        
+        return {
+            "success": True,
+            "message": "已取消所有天气播报定时任务",
+            "removed_count": len(removed_jobs),
+            "removed_jobs": removed_jobs
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 init_weather_database()
 init_weather_scheduler()
