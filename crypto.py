@@ -4,644 +4,412 @@ import requests
 import datetime
 import sqlite3
 import os
+import json
+import asyncio
+from bs4 import BeautifulSoup
 
-# 简化的数据库连接函数，避免复杂的导入
+try:
+    from playwright.async_api import async_playwright
+    PLAYWRIGHT_AVAILABLE = True
+except ImportError:
+    PLAYWRIGHT_AVAILABLE = False
+
+try:
+    from playwright_stealth import Stealth
+    PLAYWRIGHT_STEALTH_AVAILABLE = True
+except ImportError:
+    PLAYWRIGHT_STEALTH_AVAILABLE = False
+
 def get_db_connection():
-    # 使用与 main.py 相同的数据库路径
     db_path = os.path.join(os.path.dirname(__file__), "user_database.db")
     return sqlite3.connect(db_path)
 
 DB_TYPE = "sqlite"
 
 def db_execute(cursor, query, params=()):
-    # 对于 SQLite，将 %s 替换为 ?
     query = query.replace("%s", "?")
     cursor.execute(query, params)
 
-router = APIRouter(prefix="/crypto", tags=["虚拟币大额交易"])
+STATE_FILE = os.path.join(os.path.dirname(__file__), "meituan_state.json")
 
-def fetch_from_binance_api():
-    url = "https://api.binance.com/api/v3/ticker/24hr"
-    try:
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        
-        main_coins = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", 
-                      "DOGEUSDT", "SHIBUSDT", "AVAXUSDT", "LINKUSDT", "DOTUSDT",
-                      "ADAUSDT", "MATICUSDT", "LTCUSDT", "TRXUSDT", "BCHUSDT"]
-        
-        trades = []
-        for item in data:
-            symbol = item.get("symbol", "")
-            if symbol in main_coins:
-                price = float(item.get("lastPrice", "0"))
-                change = float(item.get("priceChangePercent", "0"))
-                volume = float(item.get("volume", "0"))
-                
-                trades.append({
-                    "symbol": f"{symbol[:-4]}/USDT",
-                    "price": f"${price:,.2f}",
-                    "change": f"{change:+.2f}%",
-                    "volume": f"${volume:,.0f}",
-                    "platform": "Binance",
-                    "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "type": "spot",
-                    "url": f"https://www.binance.com/en/trade/{symbol[:-4]}_USDT"
-                })
-        return trades
-    except Exception as e:
-        print(f"Binance API error: {e}")
-        return []
+def has_saved_state():
+    return os.path.exists(STATE_FILE)
 
-def fetch_from_coingecko_api():
-    url = "https://api.coingecko.com/api/v3/coins/markets"
-    params = {
-        "vs_currency": "usd",
-        "order": "market_cap_desc",
-        "per_page": 20,
-        "page": 1,
-        "sparkline": False,
-        "price_change_percentage": "24h"
-    }
-    try:
-        response = requests.get(url, params=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        
-        trades = []
-        for item in data:
-            symbol = item.get("symbol", "").upper()
-            name = item.get("name", "")
-            price = item.get("current_price", 0)
-            change = item.get("price_change_percentage_24h", 0)
-            volume = item.get("total_volume", 0)
-            
-            trades.append({
-                "symbol": f"{symbol}/USD",
-                "name": name,
-                "price": f"${price:,.2f}",
-                "change": f"{change:+.2f}%",
-                "volume": f"${volume:,.0f}",
-                "platform": "CoinGecko",
-                "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "type": "market",
-                "url": item.get("url", "https://www.coingecko.com")
-            })
-        return trades
-    except Exception as e:
-        print(f"CoinGecko API error: {e}")
-        return []
-
-def fetch_from_cryptocompare_api():
-    url = "https://min-api.cryptocompare.com/data/pricemultifull"
-    fsyms = "BTC,ETH,BNB,SOL,XRP,DOGE,SHIB,AVAX,LINK,DOT,ADA,MATIC,LTC,TRX,BCH"
-    params = {
-        "fsyms": fsyms,
-        "tsyms": "USD"
-    }
-    try:
-        response = requests.get(url, params=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        
-        trades = []
-        for symbol, info in data.get("RAW", {}).items():
-            usd_info = info.get("USD", {})
-            price = usd_info.get("PRICE", 0)
-            change = usd_info.get("CHANGEPCT24HOUR", 0)
-            volume = usd_info.get("VOLUME24HOUR", 0)
-            
-            trades.append({
-                "symbol": f"{symbol}/USD",
-                "price": f"${price:,.2f}",
-                "change": f"{change:+.2f}%",
-                "volume": f"${volume:,.0f}",
-                "platform": "CryptoCompare",
-                "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "type": "market",
-                "url": f"https://www.cryptocompare.com/coins/{symbol.lower()}/overview"
-            })
-        return trades
-    except Exception as e:
-        print(f"CryptoCompare API error: {e}")
-        return []
-
-def fetch_from_coinmarketcap_api():
-    url = "https://api.coinmarketcap.com/data-api/v3/cryptocurrency/listings/latest"
-    params = {
-        "start": "1",
-        "limit": "20",
-        "convert": "USD"
-    }
-    try:
-        response = requests.get(url, params=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        
-        trades = []
-        for item in data.get("data", {}).get("cryptoCurrencyList", []):
-            symbol = item.get("symbol", "")
-            name = item.get("name", "")
-            price = item.get("quotes", [{}])[0].get("price", 0)
-            change = item.get("quotes", [{}])[0].get("percentChange24h", 0)
-            volume = item.get("quotes", [{}])[0].get("volume24h", 0)
-            
-            trades.append({
-                "symbol": f"{symbol}/USD",
-                "name": name,
-                "price": f"${price:,.2f}",
-                "change": f"{change:+.2f}%",
-                "volume": f"${volume:,.0f}",
-                "platform": "CoinMarketCap",
-                "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "type": "market",
-                "url": f"https://coinmarketcap.com/currencies/{name.lower().replace(' ', '-')}/"
-            })
-        return trades
-    except Exception as e:
-        print(f"CoinMarketCap API error: {e}")
-        return []
-
-def fetch_large_trades():
-    all_trades = []
-    seen_symbols = set()
-    
-    sources = [
-        fetch_from_binance_api,
-        fetch_from_coingecko_api,
-        fetch_from_cryptocompare_api,
-        fetch_from_coinmarketcap_api
-    ]
-    
-    for fetch_func in sources:
+def load_saved_state():
+    if os.path.exists(STATE_FILE):
         try:
-            data = fetch_func()
-            for item in data:
-                key = f"{item['symbol']}-{item['platform']}"
-                if key not in seen_symbols:
-                    seen_symbols.add(key)
-                    all_trades.append(item)
+            with open(STATE_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
         except Exception as e:
-            print(f"Error fetching from source: {e}")
-            continue
-    
-    if not all_trades:
-        raise Exception("所有数据源都无法获取数据")
-    
-    all_trades.sort(key=lambda x: x["time"], reverse=True)
-    
-    return all_trades[:50]
-
-@router.get("/large-trades", summary="获取主流虚拟币大额买卖情况")
-def get_crypto_large_trades(userid: str = Header(None)):
-    if not userid:
-        raise HTTPException(
-            status_code=400,
-            detail={"success": False, "message": "请求头中缺少 userid 参数"}
-        )
-    
-    try:
-        trades = fetch_large_trades()
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail={"success": False, "message": f"获取虚拟币数据失败: {str(e)}"}
-        )
-    
-    return {
-        "success": True,
-        "count": len(trades),
-        "userid": userid,
-        "data": trades,
-        "message": "获取虚拟币大额交易信息成功",
-        "update_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-
-def calculate_buy_signal(change_24h, change_7d, change_30d, volume_24h_usd, market_cap_usd, price_usd, rank):
-    score = 0
-    reasons = []
-    
-    change_24h = float(change_24h) if change_24h else 0
-    change_7d = float(change_7d) if change_7d else 0
-    change_30d = float(change_30d) if change_30d else 0
-    price_usd = float(price_usd) if price_usd else 0
-    rank = int(rank) if rank else 100
-    
-    if change_24h < -10:
-        score += 45
-        reasons.append("24小时大幅下跌超过10%，强烈买入信号")
-    elif change_24h < -6:
-        score += 28
-        reasons.append("24小时跌幅超过6%")
-    elif change_24h < -3:
-        score += 14
-        reasons.append("24小时小幅下跌")
-    elif change_24h < 2:
-        score += 6
-        reasons.append("24小时价格稳定")
-    elif change_24h > 12:
-        score -= 30
-        reasons.append("24小时涨幅过大，谨慎追高")
-    elif change_24h > 6:
-        score -= 15
-        reasons.append("24小时涨幅较大")
-    
-    if change_7d < -18:
-        score += 35
-        reasons.append("7日大幅下跌超过18%")
-    elif change_7d < -10:
-        score += 22
-        reasons.append("7日跌幅超过10%")
-    elif change_7d < -4:
-        score += 10
-        reasons.append("7日小幅下跌")
-    elif change_7d < 3:
-        score += 4
-        reasons.append("7日价格稳定")
-    elif change_7d > 22:
-        score -= 20
-        reasons.append("7日涨幅过大")
-    
-    if change_30d < -25:
-        score += 30
-        reasons.append("30日大幅下跌超过25%")
-    elif change_30d < -12:
-        score += 18
-        reasons.append("30日跌幅超过12%")
-    elif change_30d < -4:
-        score += 8
-        reasons.append("30日小幅下跌")
-    elif change_30d < 3:
-        score += 3
-        reasons.append("30日价格稳定")
-    elif change_30d > 28:
-        score -= 15
-        reasons.append("30日涨幅较大")
-    
-    avg_change = (change_24h + change_7d + change_30d) / 3
-    momentum_score = change_24h - change_7d / 7
-    if momentum_score < -2:
-        score += 12
-        reasons.append("短期下跌加速，可能接近底部")
-    elif momentum_score > 2:
-        score -= 8
-        reasons.append("短期上涨加速，可能过热")
-    
-    rsi_value = min(100, max(0, 50 - avg_change * 2))
-    if rsi_value < 30:
-        score += 18
-        reasons.append("RSI低于30，超卖状态")
-    elif rsi_value < 40:
-        score += 8
-        reasons.append("RSI偏低，可能处于低位")
-    elif rsi_value > 70:
-        score -= 15
-        reasons.append("RSI高于70，超买状态")
-    
-    macd_signal = change_7d - change_30d / 4.28
-    if macd_signal < -3:
-        score += 15
-        reasons.append("MACD指标显示买入信号")
-    elif macd_signal > 5:
-        score -= 10
-        reasons.append("MACD指标显示卖出信号")
-    
-    if volume_24h_usd and market_cap_usd:
-        volume_ratio = volume_24h_usd / max(market_cap_usd, 1)
-        if volume_ratio > 0.1:
-            score += 15
-            reasons.append("成交量非常活跃")
-        elif volume_ratio > 0.04:
-            score += 8
-            reasons.append("成交量活跃")
-        elif volume_ratio < 0.006:
-            score -= 8
-            reasons.append("成交量低迷")
-    
-    if price_usd > 0:
-        if price_usd < 0.5:
-            score += 10
-            reasons.append("价格较低，风险较小")
-        elif price_usd < 5:
-            score += 6
-            reasons.append("价格适中")
-        elif price_usd < 50:
-            score += 3
-            reasons.append("价格合理")
-        elif price_usd > 10000:
-            score -= 6
-            reasons.append("价格较高，风险较大")
-    
-    volatility = abs(change_24h) + abs(change_7d) + abs(change_30d)
-    if volatility < 8:
-        score += 12
-        reasons.append("波动性低，适合稳健投资")
-    elif volatility < 15:
-        score += 5
-        reasons.append("波动性适中")
-    elif volatility > 60:
-        score -= 10
-        reasons.append("波动性过高，风险较大")
-    
-    if rank <= 10:
-        score += 8
-        reasons.append("市值排名前10，稳定性高")
-    elif rank <= 50:
-        score += 4
-        reasons.append("市值排名前50，相对稳定")
-    elif rank > 80:
-        score -= 4
-        reasons.append("市值排名靠后，风险较高")
-    
-    trend_consistency = abs(change_24h / max(abs(change_7d), 0.1))
-    if 0.5 < trend_consistency < 2:
-        score += 6
-        reasons.append("趋势一致性较好")
-    
-    reasons = sorted(reasons, key=lambda x: len(x), reverse=True)[:5]
-    
-    if score >= 55:
-        return {"buy": True, "confidence": "high", "score": score, "reasons": reasons, "risk_level": "low"}
-    elif score >= 35:
-        return {"buy": True, "confidence": "medium", "score": score, "reasons": reasons, "risk_level": "medium"}
-    elif score >= 20:
-        return {"buy": False, "confidence": "low", "score": score, "reasons": reasons, "risk_level": "medium-high"}
-    else:
-        return {"buy": False, "confidence": "very_low", "score": score, "reasons": reasons, "risk_level": "high"}
-
-def get_fallback_top_100():
+            print(f"加载保存的状态失败: {e}")
     return None
 
-def fetch_top_100_coins():
-    url = "https://api.coingecko.com/api/v3/coins/markets"
-    params = {
-        "vs_currency": "usd",
-        "order": "market_cap_desc",
-        "per_page": 100,
-        "page": 1,
-        "sparkline": False,
-        "price_change_percentage": "24h,7d,30d"
-    }
+router = APIRouter()
+
+class FoodDeliveryRequest(BaseModel):
+    location: str = "长沙市岳麓区5G加速港"
+    keyword: str = None
+    min_rating: float = 0
+    min_sales: int = 0
+    max_delivery_fee: float = 999
+    limit: int = 50
+
+async def fetch_meituan_waimai_shops(location: str = "长沙市岳麓区5G加速港", 
+                                       keyword: str = None,
+                                       min_rating: float = 0,
+                                       min_sales: int = 0,
+                                       max_delivery_fee: float = 999,
+                                       limit: int = 50):
+    """
+    使用Playwright获取美团外卖商家数据
     
-    try:
-        response = requests.get(url, params=params, timeout=60)
-        response.raise_for_status()
-        data = response.json()
+    Args:
+        location: 地址
+        keyword: 搜索关键词
+        min_rating: 最低评分
+        min_sales: 最低月售
+        max_delivery_fee: 最高配送费
+        limit: 返回数量限制
+    
+    Returns:
+        list: 商家列表
+    """
+    if not PLAYWRIGHT_AVAILABLE:
+        raise Exception("Playwright未安装")
+    
+    saved_state = load_saved_state()
+    
+    if not saved_state:
+        raise Exception("未找到保存的登录状态，请先登录")
+    
+    print(f"开始爬取美团外卖商家数据...")
+    print(f"地址: {location}")
+    print(f"使用保存的登录状态: {STATE_FILE}")
+    
+    shops = []
+    
+    async with Stealth().use_async(async_playwright()) as p:
+        browser = await p.chromium.launch(headless=True)
         
-        if not data or not isinstance(data, list):
-            raise Exception("Empty or invalid response")
+        context = await browser.new_context(
+            viewport={'width': 375, 'height': 667},
+            user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+            locale='zh-CN',
+            timezone_id='Asia/Shanghai',
+            device_scale_factor=2,
+            is_mobile=True,
+            has_touch=True,
+            permissions=['geolocation'],
+            geolocation={'latitude': 28.157178, 'longitude': 112.952278},
+            storage_state=saved_state
+        )
         
-        coins = []
-        for idx, item in enumerate(data, 1):
+        page = await context.new_page()
+        
+        async def handle_response(response):
+            nonlocal shops
             try:
-                change_24h = float(item.get("price_change_percentage_24h", 0))
-                change_7d = float(item.get("price_change_percentage_7d", 0))
-                change_30d = float(item.get("price_change_percentage_30d", 0))
-                volume_24h_usd = float(item.get("total_volume", 0))
-                market_cap_usd = float(item.get("market_cap", 0))
-                price_usd = float(item.get("current_price", 0))
-                
-                buy_signal = calculate_buy_signal(change_24h, change_7d, change_30d, volume_24h_usd, market_cap_usd, price_usd, idx)
-                
-                price_fmt = f"${price_usd:,.2f}" if price_usd else "$0.00"
-                market_cap_fmt = f"${market_cap_usd:,.0f}" if market_cap_usd else "$0"
-                volume_fmt = f"${volume_24h_usd:,.0f}" if volume_24h_usd else "$0"
-                
-                coins.append({
-                    "rank": idx,
-                    "symbol": str(item.get("symbol", "")).upper(),
-                    "name": str(item.get("name", "")),
-                    "price": price_fmt,
-                    "price_usd": price_usd,
-                    "market_cap": market_cap_fmt,
-                    "market_cap_usd": market_cap_usd,
-                    "volume_24h": volume_fmt,
-                    "volume_24h_usd": volume_24h_usd,
-                    "change_24h": f"{change_24h:+.2f}%",
-                    "change_7d": f"{change_7d:+.2f}%",
-                    "change_30d": f"{change_30d:+.2f}%",
-                    "circulating_supply": item.get("circulating_supply", 0),
-                    "max_supply": item.get("max_supply", 0),
-                    "buy_signal": buy_signal,
-                    "platform": "CoinGecko",
-                    "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "url": f"https://www.coingecko.com/en/coins/{item.get('id', '')}"
-                })
-            except Exception as item_e:
-                print(f"Error processing item {idx}: {item_e}")
-                continue
+                url = response.url
+                if 'i.waimai.meituan.com' in url and 'channel/shopList' in url:
+                    status = response.status
+                    body = await response.text()
+                    
+                    if status == 200:
+                        try:
+                            json_data = json.loads(body)
+                            
+                            if 'data' in json_data and isinstance(json_data['data'], str):
+                                inner_data = json.loads(json_data['data'])
+                                
+                                if isinstance(inner_data, dict) and 'module_list' in inner_data:
+                                    for module in inner_data['module_list']:
+                                        if isinstance(module, dict) and 'module_list' in module:
+                                            for sub_module in module['module_list']:
+                                                if isinstance(sub_module, dict) and 'string_data' in sub_module and sub_module['string_data']:
+                                                    try:
+                                                        shop_data = json.loads(sub_module['string_data'])
+                                                        if 'poi_name' in shop_data:
+                                                            shops.append(shop_data)
+                                                    except:
+                                                        pass
+                        except:
+                            pass
+            except:
+                pass
         
-        return coins if coins else []
-    
-    except Exception as e:
-        print(f"CoinGecko API error for top 100: {e}")
-        return []
-
-@router.get("/top-100", summary="获取排名前100的虚拟币")
-def get_top_100_coins(userid: str = Header(None)):
-    if not userid:
-        raise HTTPException(
-            status_code=400,
-            detail={"success": False, "message": "请求头中缺少 userid 参数"}
-        )
-    
-    try:
-        coins = fetch_top_100_coins()
-        if not coins:
-            raise Exception("无法获取虚拟币排名数据")
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail={"success": False, "message": f"获取虚拟币排名数据失败: {str(e)}"}
-        )
-    
-    buy_recommend = [coin for coin in coins if coin["buy_signal"]["buy"]]
-    not_recommend = [coin for coin in coins if not coin["buy_signal"]["buy"]]
-    
-    buy_recommend.sort(key=lambda x: x["buy_signal"]["score"], reverse=True)
-    not_recommend.sort(key=lambda x: x["buy_signal"]["score"], reverse=True)
-    
-    return {
-        "success": True,
-        "count": len(coins),
-        "userid": userid,
-        "data": coins,
-        "buy_recommend": {
-            "count": len(buy_recommend),
-            "data": buy_recommend
-        },
-        "not_recommend": {
-            "count": len(not_recommend),
-            "data": not_recommend
-        },
-        "message": "获取虚拟币排名前100成功",
-        "update_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-
-
-@router.get("/coin/{symbol}", summary="查询特定虚拟币详情")
-def get_coin_detail(
-    symbol: str,
-    userid: str = Header(None)
-):
-    if not userid:
-        raise HTTPException(status_code=400, detail={"success": False, "message": "请求头中缺少 userid 参数"})
-    
-    symbol = symbol.upper()
-    
-    try:
-        url = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids={symbol.lower()}&order=market_cap_desc&per_page=1&page=1&sparkline=false&price_change_percentage=24h%2C7d%2C30d"
-        response = requests.get(url, headers=headers, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            if data and len(data) > 0:
-                item = data[0]
-                rank = item.get("market_cap_rank", 0)
-                change_24h = item.get("price_change_percentage_24h", 0)
-                change_7d = item.get("price_change_percentage_7d", 0)
-                change_30d = item.get("price_change_percentage_30d", 0)
-                volume_24h_usd = item.get("total_volume", 0)
-                market_cap_usd = item.get("market_cap", 0)
-                price_usd = item.get("current_price", 0)
-                
-                buy_signal = calculate_buy_signal(change_24h, change_7d, change_30d, volume_24h_usd, market_cap_usd, price_usd, rank)
-                
-                price_fmt = f"${price_usd:,.2f}" if price_usd else "$0.00"
-                market_cap_fmt = f"${market_cap_usd:,.0f}" if market_cap_usd else "$0"
-                volume_fmt = f"${volume_24h_usd:,.0f}" if volume_24h_usd else "$0"
-                
-                return {
-                    "success": True,
-                    "symbol": symbol,
-                    "name": item.get("name", ""),
-                    "price": price_fmt,
-                    "price_usd": price_usd,
-                    "market_cap": market_cap_fmt,
-                    "market_cap_usd": market_cap_usd,
-                    "volume_24h": volume_fmt,
-                    "volume_24h_usd": volume_24h_usd,
-                    "change_24h": f"{change_24h:+.2f}%",
-                    "change_7d": f"{change_7d:+.2f}%",
-                    "change_30d": f"{change_30d:+.2f}%",
-                    "rank": rank,
-                    "circulating_supply": item.get("circulating_supply", 0),
-                    "max_supply": item.get("max_supply", 0),
-                    "high_24h": f"${item.get('high_24h', 0):,.2f}",
-                    "low_24h": f"${item.get('low_24h', 0):,.2f}",
-                    "buy_signal": buy_signal,
-                    "platform": "CoinGecko",
-                    "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "url": f"https://www.coingecko.com/en/coins/{item.get('id', '')}",
-                    "userid": userid
+        page.on('response', handle_response)
+        
+        print(f"访问美团外卖页面...")
+        await page.goto("https://h5.waimai.meituan.com/", wait_until="networkidle", timeout=60000)
+        await asyncio.sleep(10)
+        
+        print(f"点击美食分类...")
+        try:
+            clicked = await page.evaluate("""() => {
+                const elements = document.querySelectorAll('div, a, span, button');
+                for (const el of elements) {
+                    const text = (el.innerText || '').trim();
+                    if (text === '美食' || text === '美食推荐') {
+                        el.click();
+                        return true;
+                    }
                 }
+                return false;
+            }""")
+            
+            if clicked:
+                print(f"等待商家数据加载...")
+                for i in range(30):
+                    await asyncio.sleep(1)
+                    if len(shops) >= limit:
+                        break
+        except Exception as e:
+            print(f"点击美食分类失败: {e}")
         
-        raise HTTPException(status_code=404, detail={"success": False, "message": f"未找到虚拟币: {symbol}"})
+        if keyword:
+            print(f"搜索关键词: {keyword}")
+            try:
+                search_input = await page.query_selector("input[placeholder*='搜索'], input[class*='search']")
+                if search_input:
+                    await search_input.click()
+                    await asyncio.sleep(1)
+                    await search_input.fill(keyword)
+                    await asyncio.sleep(2)
+                    await search_input.press('Enter')
+                    await asyncio.sleep(10)
+                    
+                    for i in range(20):
+                        await asyncio.sleep(1)
+                        if len(shops) >= limit:
+                            break
+            except Exception as e:
+                print(f"搜索失败: {e}")
+        
+        print(f"滚动页面加载更多数据...")
+        for i in range(5):
+            await page.mouse.wheel(0, 1000)
+            await asyncio.sleep(2)
+            if len(shops) >= limit:
+                break
+        
+        await asyncio.sleep(10)
+        
+        await browser.close()
     
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error fetching coin detail: {e}")
-        raise HTTPException(status_code=500, detail={"success": False, "message": "获取虚拟币详情失败"})
-
-
-class FavoriteRequest(BaseModel):
-    symbol: str
-    name: str = ""
-
-
-@router.post("/favorites", summary="收藏虚拟币")
-def add_favorite(req: FavoriteRequest, userid: str = Header(None)):
-    if not userid:
-        raise HTTPException(status_code=400, detail={"success": False, "message": "请求头中缺少 userid 参数"})
+    print(f"总共获取到 {len(shops)} 个商家")
     
-    conn = get_db_connection()
+    filtered_shops = []
+    for shop in shops:
+        if not isinstance(shop, dict):
+            continue
+        
+        rating = 0
+        if 'wm_poi_score' in shop:
+            try:
+                rating = float(shop['wm_poi_score'])
+            except:
+                pass
+        
+        sales = 0
+        if 'month_sales_tip' in shop:
+            try:
+                sales_text = str(shop['month_sales_tip'])
+                if '月售' in sales_text:
+                    sales_num = sales_text.replace('月售', '').replace('+', '').replace('万', '0000')
+                    sales = int(sales_num)
+            except:
+                pass
+        
+        delivery_fee = 999
+        if 'shipping_fee_tip' in shop:
+            try:
+                fee_text = str(shop['shipping_fee_tip'])
+                if '¥' in fee_text:
+                    fee_num = fee_text.split('¥')[-1].strip()
+                    delivery_fee = float(fee_num)
+            except:
+                pass
+        
+        if rating >= min_rating and sales >= min_sales and delivery_fee <= max_delivery_fee:
+            filtered_shops.append({
+                'id': shop.get('wm_poi_id', ''),
+                'name': shop.get('poi_name', ''),
+                'rating': rating,
+                'sales': sales,
+                'sales_text': shop.get('month_sales_tip', ''),
+                'delivery_fee': delivery_fee,
+                'delivery_fee_text': shop.get('shipping_fee_tip', ''),
+                'avg_price': shop.get('avg_price_tip', ''),
+                'delivery_time': shop.get('delivery_time_tip', ''),
+                'distance': shop.get('distance', ''),
+                'min_price': shop.get('min_price_tip', ''),
+                'image': shop.get('poi_pic', ''),
+                'address': location
+            })
     
-    if DB_TYPE == "postgresql":
-        cursor = conn.cursor()
-    else:
-        cursor = conn.cursor()
+    filtered_shops = filtered_shops[:limit]
+    print(f"筛选后返回 {len(filtered_shops)} 个商家")
     
+    return filtered_shops
+
+@router.get("/food-delivery/meituan/homepage")
+async def get_meituan_homepage(location: str = "长沙市岳麓区5G加速港"):
+    """
+    获取美团外卖首页数据（商家列表）
+    
+    Args:
+        location: 地址，默认为"长沙市岳麓区5G加速港"
+    
+    Returns:
+        dict: 首页数据
+    """
     try:
-        # 先检查是否已经收藏
-        db_execute(cursor, "SELECT id FROM crypto_favorites WHERE user_id = %s AND symbol = %s", (userid, req.symbol.upper()))
-        existing = cursor.fetchone()
+        shops = await fetch_meituan_waimai_shops(location=location, limit=50)
         
-        if existing:
-            return {"success": True, "message": "该虚拟币已经收藏"}
-        
-        # 添加收藏
-        db_execute(cursor, "INSERT INTO crypto_favorites (user_id, symbol, name) VALUES (%s, %s, %s)",
-                       (userid, req.symbol.upper(), req.name))
-        conn.commit()
-        
-        print(f"✅ 用户 {userid} 收藏虚拟币: {req.symbol.upper()}")
-        
-        return {"success": True, "message": "收藏成功"}
-        
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail={"success": False, "message": f"收藏失败: {str(e)}"})
-    finally:
-        conn.close()
-
-
-@router.delete("/favorites/{symbol}", summary="取消收藏虚拟币")
-def remove_favorite(symbol: str, userid: str = Header(None)):
-    if not userid:
-        raise HTTPException(status_code=400, detail={"success": False, "message": "请求头中缺少 userid 参数"})
-    
-    conn = get_db_connection()
-    
-    if DB_TYPE == "postgresql":
-        cursor = conn.cursor()
-    else:
-        cursor = conn.cursor()
-    
-    try:
-        db_execute(cursor, "DELETE FROM crypto_favorites WHERE user_id = %s AND symbol = %s", (userid, symbol.upper()))
-        conn.commit()
-        
-        if cursor.rowcount > 0:
-            print(f"✅ 用户 {userid} 取消收藏虚拟币: {symbol.upper()}")
-            return {"success": True, "message": "取消收藏成功"}
-        else:
-            return {"success": True, "message": "该虚拟币未在收藏列表中"}
-        
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail={"success": False, "message": f"取消收藏失败: {str(e)}"})
-    finally:
-        conn.close()
-
-
-@router.get("/favorites", summary="获取收藏的虚拟币列表")
-def get_favorites(userid: str = Header(None)):
-    if not userid:
-        raise HTTPException(status_code=400, detail={"success": False, "message": "请求头中缺少 userid 参数"})
-    
-    conn = get_db_connection()
-    
-    if DB_TYPE == "postgresql":
-        cursor = conn.cursor()
-    else:
-        cursor = conn.cursor()
-    
-    try:
-        db_execute(cursor, "SELECT symbol, name, created_at FROM crypto_favorites WHERE user_id = %s ORDER BY created_at DESC", (userid,))
-        favorites = cursor.fetchall()
-        
-        favorite_list = []
-        for fav in favorites:
-            favorite_list.append({
-                "symbol": fav[0],
-                "name": fav[1],
-                "created_at": str(fav[2])
+        categories = []
+        category_names = ["美食", "甜点饮品", "超市便利", "蔬菜水果", "鲜花蛋糕", "夜宵", "正餐优选", "汉堡披萨"]
+        for name in category_names:
+            categories.append({
+                'id': name,
+                'name': name,
+                'icon': '',
+                'url': ''
             })
         
-        return {"success": True, "count": len(favorite_list), "favorites": favorite_list}
+        banners = []
         
+        return {
+            'success': True,
+            'data': {
+                'shops': shops,
+                'categories': categories,
+                'banners': banners,
+                'location': location,
+                'platform': 'meituan',
+                'timestamp': datetime.datetime.now().isoformat()
+            }
+        }
     except Exception as e:
-        raise HTTPException(status_code=500, detail={"success": False, "message": f"获取收藏列表失败: {str(e)}"})
-    finally:
-        conn.close()
+        print(f"获取美团外卖首页数据失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'error': str(e),
+            'data': {
+                'shops': [],
+                'categories': [],
+                'banners': [],
+                'location': location,
+                'platform': 'meituan',
+                'timestamp': datetime.datetime.now().isoformat()
+            }
+        }
+
+@router.get("/food-delivery/meituan/search")
+async def search_meituan(
+    location: str = "长沙市岳麓区5G加速港",
+    keyword: str = None,
+    min_rating: float = 0,
+    min_sales: int = 0,
+    max_delivery_fee: float = 999,
+    limit: int = 50
+):
+    """
+    搜索美团外卖商家
+    
+    Args:
+        location: 地址
+        keyword: 搜索关键词
+        min_rating: 最低评分
+        min_sales: 最低月售
+        max_delivery_fee: 最高配送费
+        limit: 返回数量限制
+    
+    Returns:
+        dict: 搜索结果
+    """
+    try:
+        shops = await fetch_meituan_waimai_shops(
+            location=location,
+            keyword=keyword,
+            min_rating=min_rating,
+            min_sales=min_sales,
+            max_delivery_fee=max_delivery_fee,
+            limit=limit
+        )
+        
+        return {
+            'success': True,
+            'data': {
+                'shops': shops,
+                'total': len(shops),
+                'keyword': keyword,
+                'location': location,
+                'platform': 'meituan',
+                'timestamp': datetime.datetime.now().isoformat()
+            }
+        }
+    except Exception as e:
+        print(f"搜索美团外卖商家失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'error': str(e),
+            'data': {
+                'shops': [],
+                'total': 0,
+                'keyword': keyword,
+                'location': location,
+                'platform': 'meituan',
+                'timestamp': datetime.datetime.now().isoformat()
+            }
+        }
+
+@router.post("/food-delivery/meituan/test")
+async def test_meituan_crawler(request: FoodDeliveryRequest):
+    """
+    测试美团外卖爬虫
+    
+    Args:
+        request: 爬取请求参数
+    
+    Returns:
+        dict: 测试结果
+    """
+    try:
+        shops = await fetch_meituan_waimai_shops(
+            location=request.location,
+            keyword=request.keyword,
+            min_rating=request.min_rating,
+            min_sales=request.min_sales,
+            max_delivery_fee=request.max_delivery_fee,
+            limit=request.limit
+        )
+        
+        return {
+            'success': True,
+            'data': {
+                'shops': shops,
+                'total': len(shops),
+                'request': request.dict(),
+                'platform': 'meituan',
+                'timestamp': datetime.datetime.now().isoformat()
+            }
+        }
+    except Exception as e:
+        print(f"测试美团外卖爬虫失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'error': str(e),
+            'data': {
+                'shops': [],
+                'total': 0,
+                'request': request.dict(),
+                'platform': 'meituan',
+                'timestamp': datetime.datetime.now().isoformat()
+            }
+        }

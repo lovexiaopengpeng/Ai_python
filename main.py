@@ -33,6 +33,12 @@ app.include_router(stock_router)
 from crypto import router as crypto_router
 app.include_router(crypto_router)
 
+from wechat_robot import router as wechat_router
+app.include_router(wechat_router)
+
+from weather_robot import router as weather_router
+app.include_router(weather_router)
+
 def get_db_connection():
     if DB_TYPE == "postgresql" and DATABASE_URL:
         try:
@@ -91,6 +97,30 @@ def init_database():
             cursor.execute(create_favorites_table_sql_postgres)
         else:
             cursor.execute(create_favorites_table_sql)
+        
+        # 创建取消收藏列表表
+        if DB_TYPE == "postgresql":
+            create_removed_table_sql = """
+                CREATE TABLE IF NOT EXISTS crypto_favorites_removed (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    symbol TEXT NOT NULL,
+                    name TEXT,
+                    removed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """
+        else:
+            create_removed_table_sql = """
+                CREATE TABLE IF NOT EXISTS crypto_favorites_removed (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    symbol TEXT NOT NULL,
+                    name TEXT,
+                    removed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """
+        cursor.execute(create_removed_table_sql)
+        
         conn.commit()
         print(f"✅ 用户数据库初始化完成 ({DB_TYPE})")
     except Exception as e:

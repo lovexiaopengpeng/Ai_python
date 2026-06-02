@@ -1,0 +1,477 @@
+{
+  "cookies": [
+    {
+      "name": "com.sankuai.wmcapp.openh5.static_strategy",
+      "value": "tCfw4c3ZBq",
+      "domain": "h5.waimai.meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "com.sankuai.wmcapp.openh5.static_random",
+      "value": "tCfw4c3ZBq_98.4695",
+      "domain": "h5.waimai.meituan.com",
+      "path": "/",
+      "expires": 1785549912.959958,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "wm_order_channel",
+      "value": "default",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1782957762,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "appVersion",
+      "value": "null",
+      "domain": "h5.waimai.meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "swim_line",
+      "value": "default",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1782957919,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "utm_source",
+      "value": "",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1782957919,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "appmock",
+      "value": "null",
+      "domain": "h5.waimai.meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "igateApp",
+      "value": "igate",
+      "domain": "h5.waimai.meituan.com",
+      "path": "/",
+      "expires": 1811469919,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_lxsdk_cuid",
+      "value": "19e8611a4efc8-0d27e3685c2bd68-296e4f35-3d10d-19e8611a4efc8",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1814925763.823917,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "au_trace_key_net",
+      "value": "default",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_lx_utm",
+      "value": "utm_source%253D60066",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "isIframe",
+      "value": "false",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "WEBDFPID",
+      "value": "200v3x9v527350210v563y53yw7w09ww80v1388z4xx879581y5818v9-1780452164083-1780365762857QKWYAEIfd79fef3d01d5e9aadc18ccd4d0c95072402",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1814925919.169144,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "utm_source_rg",
+      "value": "AM%25edHf8f2%25426%25B99Ay.-ARBdyR9BL9ARbyiRyirdr9-rrM9ALyMMos..Md-RMLiRMLMA-",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1814925764,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "terminal",
+      "value": "i",
+      "domain": "i.waimai.meituan.com",
+      "path": "/",
+      "expires": 1814925962.15441,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "w_utmz",
+      "value": "\"utm_campaign=(direct)&utm_source=5000&utm_medium=(none)&utm_content=(none)&utm_term=(none)\"",
+      "domain": "i.waimai.meituan.com",
+      "path": "/",
+      "expires": 1814925962.154455,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "w_visitid",
+      "value": "b410d9ab-4e7c-4e86-a385-9bdc5239c494",
+      "domain": "i.waimai.meituan.com",
+      "path": "/",
+      "expires": 1780367564.359308,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "channelType",
+      "value": "{%22default%22:%220%22}",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1780369364,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "channelConfig",
+      "value": "{%22channel%22:%22default%22%2C%22type%22:0%2C%22fixedReservation%22:{%22reservationTimeStatus%22:0%2C%22startReservationTime%22:0%2C%22endReservationTime%22:0}}",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1780369364,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "showTopHeader",
+      "value": "show",
+      "domain": "h5.waimai.meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "isTcMpa",
+      "value": "false",
+      "domain": "h5.waimai.meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "com.sankuai.passport.login.component_strategy",
+      "value": "",
+      "domain": "passport.meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "iuuid",
+      "value": "53F3E47A7B9480ECB5970E0FD29B85F8C3F4E4B36B0D1626CCEF6F66D8A16B93",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1814925916.766655,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "com.sankuai.jsprotect.h5guard_strategy",
+      "value": "",
+      "domain": "appsec-mobile.meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "userId",
+      "value": "820269677",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1795917912.824092,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_lxsdk",
+      "value": "53F3E47A7B9480ECB5970E0FD29B85F8C3F4E4B36B0D1626CCEF6F66D8A16B93",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1814925883.187904,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "openh5_uuid",
+      "value": "53F3E47A7B9480ECB5970E0FD29B85F8C3F4E4B36B0D1626CCEF6F66D8A16B93",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "uuid",
+      "value": "53F3E47A7B9480ECB5970E0FD29B85F8C3F4E4B36B0D1626CCEF6F66D8A16B93",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "userIdCanceled",
+      "value": "0",
+      "domain": "h5.waimai.meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "uuidCanceled",
+      "value": "0",
+      "domain": "h5.waimai.meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "openh5_uuid",
+      "value": "53F3E47A7B9480ECB5970E0FD29B85F8C3F4E4B36B0D1626CCEF6F66D8A16B93",
+      "domain": "i.waimai.meituan.com",
+      "path": "/",
+      "expires": 1814925962.154499,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "token",
+      "value": "AgF3IW-E6Za3KbaN_3YBo0Fl5GcuonUU87_KmFrohXjptwpvzXC7DoFbE3AHMdF8vYs9zQkPd0BXawAAAADuNQAA1clXOWSw1M0DikYo0r8Dr1lzE3omy69dsMtqsrKGqHh7WTM8Z8zPgXaXoh77W6_F",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1795917912.823883,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "mt_c_token",
+      "value": "AgF3IW-E6Za3KbaN_3YBo0Fl5GcuonUU87_KmFrohXjptwpvzXC7DoFbE3AHMdF8vYs9zQkPd0BXawAAAADuNQAA1clXOWSw1M0DikYo0r8Dr1lzE3omy69dsMtqsrKGqHh7WTM8Z8zPgXaXoh77W6_F",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1795917912.824007,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "oops",
+      "value": "AgF3IW-E6Za3KbaN_3YBo0Fl5GcuonUU87_KmFrohXjptwpvzXC7DoFbE3AHMdF8vYs9zQkPd0BXawAAAADuNQAA1clXOWSw1M0DikYo0r8Dr1lzE3omy69dsMtqsrKGqHh7WTM8Z8zPgXaXoh77W6_F",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1795917912.824053,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "w_token",
+      "value": "AgF3IW-E6Za3KbaN_3YBo0Fl5GcuonUU87_KmFrohXjptwpvzXC7DoFbE3AHMdF8vYs9zQkPd0BXawAAAADuNQAA1clXOWSw1M0DikYo0r8Dr1lzE3omy69dsMtqsrKGqHh7WTM8Z8zPgXaXoh77W6_F",
+      "domain": "i.waimai.meituan.com",
+      "path": "/",
+      "expires": 1814925962.154477,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "logan_session_token",
+      "value": "bgy5s5yx3gtntwgoncn9",
+      "domain": "h5.waimai.meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "userName",
+      "value": "%E9%B9%8F%E9%B9%8F6148",
+      "domain": "h5.waimai.meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "userFace",
+      "value": "https://img.meituan.net/avatar/a4db151ec0d3171495e3d7137a1ec33530336.jpg",
+      "domain": "h5.waimai.meituan.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_lxsdk_s",
+      "value": "19e8611a4ef-42a-a3b-0cb%7C%7C94",
+      "domain": ".meituan.com",
+      "path": "/",
+      "expires": 1780367765,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://h5.waimai.meituan.com",
+      "localStorage": [
+        {
+          "name": "deliverypoi",
+          "value": "{\"lat\":null,\"lng\":null,\"geotype\":2,\"addressId\":null,\"poi\":null,\"address\":null,\"gender\":null,\"name\":null,\"phone\":null,\"addressType\":null}"
+        },
+        {
+          "name": "dfpId",
+          "value": "200v3x9v527350210v563y53yw7w09ww80v1388z4xx879581y5818v9"
+        },
+        {
+          "name": "mars-weblog-cache",
+          "value": "{\"geo\":{\"latitude\":28.116918,\"longitude\":112.936868,\"geotype\":\"GCJ02\",\"accuracy\":500,\"source\":\"network\"},\"city\":{\"name\":\"长沙\",\"type\":\"meituan\",\"id\":70,\"city\":\"长沙\",\"pinyin\":\"changsha\",\"adcode\":\"430104\",\"areaId\":-1,\"areaName\":\"\",\"province\":\"湖南省\",\"district\":\"岳麓区\",\"address\":\"长沙荟聚\",\"country\":\"中国\"},\"time\":1780365931630}"
+        },
+        {
+          "name": "addstore",
+          "value": "[{\"addressId\":1950000016,\"name\":\"陈\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"湖南湘江新区大学生创新创业园\",\"address\":\"801\",\"lat\":28157066,\"lng\":112952186,\"isOutOfRange\":0,\"houseNumber\":\"801\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000021,\"name\":\"陈\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"城市花园-B栋\",\"address\":\"901\",\"lat\":28189661,\"lng\":112995891,\"isOutOfRange\":0,\"houseNumber\":\"901\",\"isDefault\":0,\"bindType\":15,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000020,\"name\":\"陈\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"鑫天大厦\",\"address\":\"901\",\"lat\":28193852,\"lng\":112996227,\"isOutOfRange\":0,\"houseNumber\":\"901\",\"isDefault\":0,\"bindType\":15,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000019,\"name\":\"陈\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"温汤镇半山渡温泉民宿\",\"address\":\"2-303\",\"lat\":27691673,\"lng\":114278413,\"isOutOfRange\":0,\"houseNumber\":\"2-303\",\"isDefault\":0,\"bindType\":15,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000018,\"name\":\"陈\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"嘉新时代广场\",\"address\":\"\",\"lat\":28364737,\"lng\":112907398,\"isOutOfRange\":0,\"houseNumber\":\"\",\"isDefault\":0,\"bindType\":12,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000017,\"name\":\"陈鹏\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"帝辰金缇水郡-6栋-2单元\",\"address\":\"2906\",\"lat\":28354935,\"lng\":112890836,\"isOutOfRange\":0,\"houseNumber\":\"2906\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000013,\"name\":\"陈先生 预制菜请提前电话告知否则12345投诉\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"中电软件园二期-F5栋\",\"address\":\"1楼右脑科技\",\"lat\":28227096,\"lng\":112886476,\"isOutOfRange\":0,\"houseNumber\":\"1楼右脑科技\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000015,\"name\":\"陈\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"长沙医学院附属第一医院\",\"address\":\"\",\"lat\":28294661,\"lng\":112875134,\"isOutOfRange\":0,\"houseNumber\":\"\",\"isDefault\":0,\"bindType\":12,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000014,\"name\":\"王\",\"gender\":2,\"phone\":\"13647479885\",\"poi\":\"长沙医学院附属第一医院\",\"address\":\"3楼儿科\",\"lat\":28294661,\"lng\":112875134,\"isOutOfRange\":0,\"houseNumber\":\"3楼儿科\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000012,\"name\":\"陈\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"天祥水晶湾-东座\",\"address\":\"545右脑科技\",\"lat\":28190088,\"lng\":112891918,\"isOutOfRange\":0,\"houseNumber\":\"545右脑科技\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000011,\"name\":\"陈先生\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"下麻园岭巷-40号楼\",\"address\":\"下麻园岭巷40栋602\",\"lat\":28218593,\"lng\":112984917,\"isOutOfRange\":0,\"houseNumber\":\"下麻园岭巷40栋602\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000010,\"name\":\"郭女士\",\"gender\":1,\"phone\":\"15521547265\",\"poi\":\"蓝湾国际广场-A座\",\"address\":\"21楼\",\"lat\":28165325,\"lng\":112971179,\"isOutOfRange\":0,\"houseNumber\":\"21楼\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000008,\"name\":\"陈先生\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"盛大金禧国际金融中心\",\"address\":\"35楼\",\"lat\":28215433,\"lng\":112986253,\"isOutOfRange\":0,\"houseNumber\":\"35楼\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000009,\"name\":\"郭女士\",\"gender\":1,\"phone\":\"15521547265\",\"poi\":\"蓝湾国际广场-A座\",\"address\":\"A座21楼\",\"lat\":28165325,\"lng\":112971179,\"isOutOfRange\":0,\"houseNumber\":\"A座21楼\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000006,\"name\":\"陈\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"盛大金禧国际金融中心\",\"address\":\"35楼盛大金禧\",\"lat\":28215387,\"lng\":112986044,\"isOutOfRange\":0,\"houseNumber\":\"35楼盛大金禧\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000007,\"name\":\"闫警官\",\"gender\":1,\"phone\":\"13038930838\",\"poi\":\"城南路派出所\",\"address\":\"2楼\",\"lat\":28183201,\"lng\":112978843,\"isOutOfRange\":0,\"houseNumber\":\"2楼\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000001,\"name\":\"陈\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"环球中心B座\",\"address\":\"9楼创思科\",\"lat\":28223220,\"lng\":112954294,\"isOutOfRange\":0,\"houseNumber\":\"9楼创思科\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000003,\"name\":\"陈\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"柏家塘小区-综合楼\",\"address\":\"1单元8楼8209\",\"lat\":28200477,\"lng\":112889138,\"isOutOfRange\":0,\"houseNumber\":\"1单元8楼8209\",\"isDefault\":0,\"bindType\":15,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000005,\"name\":\"陈\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"衡阳湘江宾馆(火车站店)\",\"address\":\"808\",\"lat\":26887849,\"lng\":112625823,\"isOutOfRange\":0,\"houseNumber\":\"808\",\"isDefault\":0,\"bindType\":15,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000004,\"name\":\"黄红梅\",\"gender\":2,\"phone\":\"13755113038\",\"poi\":\"同天大酒店\",\"address\":\"1701\",\"lat\":28197894,\"lng\":113001352,\"isOutOfRange\":0,\"houseNumber\":\"1701\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1950000002,\"name\":\"陈翔\",\"gender\":1,\"phone\":\"17674711448\",\"poi\":\"崧江\",\"address\":\"广东佛山市南海区大沥镇环村东路万家惠百货\",\"lat\":23124170,\"lng\":113171930,\"isOutOfRange\":0,\"houseNumber\":\"广东佛山市南海区大沥镇环村东路万家惠百货\",\"isDefault\":0,\"bindType\":15,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1456402732,\"name\":\"陈鹏\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"湘聚大厦\",\"address\":\"1606\",\"lat\":28197458,\"lng\":113016449,\"isOutOfRange\":0,\"houseNumber\":\"1606\",\"isDefault\":0,\"bindType\":15,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1594513873,\"name\":\"王玉\",\"gender\":2,\"phone\":\"13647479885\",\"poi\":\"潮宗御苑\",\"address\":\"a栋4楼婕西卡美容机构\",\"lat\":28204334,\"lng\":112971603,\"isOutOfRange\":0,\"houseNumber\":\"a栋4楼婕西卡美容机构\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":1428975748,\"name\":\"陈鹏\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"潮宗御苑\",\"address\":\"c栋4604\",\"lat\":28204460,\"lng\":112971725,\"isOutOfRange\":0,\"houseNumber\":\"c栋4604\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":634671685,\"name\":\"陈鹏\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"湖南新物产集团北院\",\"address\":\"迎宾路口地铁站2号出口往前200米6楼湖南网优信息技术有限公司\",\"lat\":28194388,\"lng\":112994560,\"isOutOfRange\":0,\"houseNumber\":\"迎宾路口地铁站2号出口往前200米6楼湖南网优信息技术有限公司\",\"isDefault\":0,\"bindType\":15,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":732496519,\"name\":\"陈鹏\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"198大酒店(远大一路)\",\"address\":\"湘聚大厦1468\",\"lat\":28197414,\"lng\":113016728,\"isOutOfRange\":0,\"houseNumber\":\"湘聚大厦1468\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":468695520,\"name\":\"陈鹏\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"望城坡涧塘建材装饰批发市场18栋\",\"address\":\"人人乐对面加油站雷锋大道口公交站对面涧塘小区19栋108号601\",\"lat\":28216572,\"lng\":112911920,\"isOutOfRange\":0,\"houseNumber\":\"人人乐对面加油站雷锋大道口公交站对面涧塘小区19栋108号601\",\"isDefault\":0,\"bindType\":11,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"},{\"addressId\":424618052,\"name\":\"陈鹏\",\"gender\":1,\"phone\":\"17673109359\",\"poi\":\"创优楼\",\"address\":\"生产力促进中心创新楼614\",\"lat\":28224070,\"lng\":112903160,\"isOutOfRange\":0,\"houseNumber\":\"生产力促进中心创新楼614\",\"isDefault\":0,\"bindType\":15,\"addressType\":0,\"isCheckOffDefaultAddr\":0,\"over_shipping_txt\":\"\"}]"
+        },
+        {
+          "name": "mars-weblog-trackpoints",
+          "value": "[]"
+        },
+        {
+          "name": "geopoi",
+          "value": "{\"lat\":28.116918,\"lng\":112.936868,\"poi\":\"长沙荟聚\"}"
+        },
+        {
+          "name": "__lxsdk__lxsdk_cuid",
+          "value": "\"19e8611a4efc8-0d27e3685c2bd68-296e4f35-3d10d-19e8611a4efc8\""
+        },
+        {
+          "name": "localId",
+          "value": "1780365762857QKWYAEIfd79fef3d01d5e9aadc18ccd4d0c95072402"
+        },
+        {
+          "name": "dfp_timestamp",
+          "value": "1780452164083"
+        },
+        {
+          "name": "LLog_vrld_1$_1780365919231_shared",
+          "value": "{\"content\":[],\"client\":\"web\",\"deviceModel\":\"Win32\",\"sdkVersion\":\"1.3.6\",\"topic\":\"app.com.sankuai.waimai.c.openh5\",\"appKey\":\"com.sankuai.wmcapp.openh5.static\",\"userID\":\"820269677\",\"enableUserEvents\":false,\"key\":\"A/hxZFW1b1VBFYuxTaJF/5zdb3JTL9Xmxk1fea/bS8XY\"}"
+        },
+        {
+          "name": "param",
+          "value": "{\"pickedPOI\":{\"lat\":28.157178,\"lng\":112.952278,\"geotype\":2,\"poi\":\"5G加速港\",\"address\":\"潇湘中路328号\"},\"initialLat\":28.157178,\"initialLng\":112.952278,\"addressName\":\"5G加速港\",\"address\":\"潇湘中路328号\",\"geoPOI\":{\"lat\":28.116918,\"lng\":112.936868,\"poi\":\"长沙荟聚\"},\"lat\":28.116918,\"lng\":112.936868,\"selectedAddr\":{\"lat\":null,\"lng\":null,\"geotype\":2,\"addressId\":null,\"poi\":null,\"address\":null,\"gender\":null,\"name\":null,\"phone\":null,\"addressType\":null}}"
+        },
+        {
+          "name": "_horn_openh5_channel_config",
+          "value": "{\"expireTime\":1780366370106,\"originValue\":{\"customer\":{\"login_module\":[\"testch\",\"stll-bjyd\"],\"login_module_v2\":{\"h5login\":{\"channel\":[]},\"ilogin\":{\"channel\":[\"testch\",\"stll-bjyd\"]},\"knblogin\":{\"channel\":[\"mtjjb\",\"mtjxb\",\"knbtest\"]},\"unicomAuthLogin\":{\"channel\":[\"yzlt\",\"uniontest\"],\"page\":{\"production\":\"https://img.client.10010.com/stprototype/dingwei/index.html\",\"stage\":\"https://img.client.10010.com/web_prepub/stprototype/dingwei/index.html\",\"test\":\"http://ecstest2018.10010.com/meituanwaimai/index.html\"}}}},\"horn\":{\"cacheDuration\":10,\"cleanCacheForUpgrade\":false,\"overTime\":false,\"pollDuration\":-1,\"pollPeriod\":[\"00:01\",\"23:59\"],\"rateLimit\":0,\"time\":\"N/A\",\"url\":\"N/A\",\"version\":483368},\"hornId\":\"openh5_channel_config\"}}"
+        },
+        {
+          "name": "_horn_openh5_loganrtl_white",
+          "value": "{\"expireTime\":1780366370151,\"originValue\":{\"customer\":{\"channel\":[\"hongmengwaimai\",\"stll-bjyd\",\"stll-wyyyy\",\"hwfwggfw\",\"stll-QQ\",\"sqt_stll_hxyh\",\"stll-txsp\",\"hwfwggdt\",\"sqt_stll_gsyh\",\"stll-bdjsb\",\"stllhwwmkp\",\"stll-CCB\",\"sqt_stll_msyh\",\"stll-aqy\",\"jsyh\",\"mtjjb\",\"hwfwgggjc\",\"vivokyy\",\"hwkyy\",\"hwfwggjy\",\"oppokyy\",\"sqt_stll_ysf\",\"sqt_stll_zxyh\",\"vivofyp01\",\"stll-nyyh\",\"mtjxb\",\"bdxcx\",\"sqt_stll_ccb\",\"toufanghwfwgg\",\"sqt_stll_jsyh\"],\"url\":[\"/openapi/v1/poi/food\",\"/openh5/order/v2/preview\",\"/openh5/order/trade/v3/getvalid\",\"/openh5/order/v2/poicoupons/getvalidWithSales\",\"/openh5/order/v2/submit\"]},\"horn\":{\"cacheDuration\":10,\"cleanCacheForUpgrade\":false,\"overTime\":false,\"pollDuration\":-1,\"pollPeriod\":[\"00:01\",\"23:59\"],\"rateLimit\":0,\"time\":\"N/A\",\"url\":\"N/A\",\"version\":751183},\"hornId\":\"openh5_loganrtl_white\"}}"
+        },
+        {
+          "name": "pickedpoi",
+          "value": "{\"lat\":28.157178,\"lng\":112.952278,\"geotype\":2,\"poi\":\"5G加速港\",\"address\":\"潇湘中路328号\"}"
+        },
+        {
+          "name": "login_back_home",
+          "value": ""
+        },
+        {
+          "name": "llog_config",
+          "value": "{\"llog_enabled\":true,\"llog_endpoint_prod\":\"https://logan-rtl.dreport.meituan.net\",\"llog_endpoint_dev\":\"https://rtl-test.d.meituan.net\",\"llog_keyRotateInterval\":604800,\"llog_enableUserEvents\":true,\"trigger_interval\":30,\"trigger_count\":30,\"trigger_onhide\":true,\"trigger_onunload\":true,\"llog_allowUnencrypted\":true,\"id\":\"e7wg-dd2x-c63h-be50\",\"limit_retryCap\":1,\"limit_logLength\":20480,\"limit_logsPerMin\":2000,\"limit_sender_queue_size\":2,\"limit_storage_bytes\":3145728,\"limit_storage_filter\":[],\"limit_log_filter\":[],\"sampleRate_uploadEvent\":0.001,\"sampleRate_storageEvent\":0.001,\"sampleRate_lifetimeTracing\":0.01,\"sampleRate_errorReporting\":0.01,\"sampleRate_resumeUpload\":0.01,\"llog_prefersFetch\":false,\"remove_unassociated_storage_keys\":true}"
+        },
+        {
+          "name": "guardAppkey",
+          "value": "cd06a5c56736bd3d03dacc9cb7ecd94e73050dbaa558615c1a2fc369c7d30077"
+        },
+        {
+          "name": "_horn_homepage_graytheme_config",
+          "value": "{\"expireTime\":1780366070465,\"originValue\":{\"customer\":{\"config\":\"[{\\\"start\\\":\\\"2023/03/14 00:00:00\\\",\\\"end\\\":\\\"2023/03/14 23:59:59\\\"}]\"},\"horn\":{\"cacheDuration\":5,\"cleanCacheForUpgrade\":false,\"overTime\":false,\"pollDuration\":-1,\"pollPeriod\":[\"00:01\",\"23:59\"],\"rateLimit\":0,\"time\":\"N/A\",\"url\":\"N/A\",\"version\":552782},\"hornId\":\"homepage_graytheme_config\"}}"
+        },
+        {
+          "name": "dfp_params_list",
+          "value": "{\"auto_init\":0,\"black_host\":[\"gatewaydsp.meituan.com\",\"portal-portm.meituan.com\",\"dd.sankuai.com\",\"dd.meituan.com\",\"catfront.dianping.com\",\"catfront.51ping.com\",\"report.meituan.com\",\"dreport.meituan.net\",\"postreport.meituan.com\",\"wreport1.meituan.net\",\"lx0.meituan.com\",\"lx1.meituan.net\",\"lx2.meituan.net\",\"plx.meituan.com\",\"hlx.meituan.com\",\"ad.e.waimai.sankuai.com:80\",\"speech-inspection.vip.sankuai.com\",\"kms.sankuai.com\",\"r.dianping.com\",\"r1.dianping.com\",\"api-channel.waimai.meituan.com\",\"lion-monitor.sankuai.com\",\"cat-config.sankuai.com\",\"catdot.sankuai.com\",\"s3plus.meituan.net\",\"ebooking.meituan.com\",\"eb.hotel.test.sankuai.com\",\"eb.vip.sankuai.com\",\"eb.meituan.com\",\"logan.sankuai.com\",\"mads.meituan.com\",\"mlog.dianping.com\",\"oneservice.meituan.com\",\"api-unionid.meituan.com\",\"fe-config.meituan.com\",\"fe-config0.meituan.com\",\"h.meituan.com\",\"p.meituan.com\",\"peisong-collector.meituan.com\",\"wreport2.meituan.net\",\"hreport.meituan.com\",\"c.qcs.test.sankuai.com\",\"dache.st.meituan.com\",\"dache.meituan.com\"],\"black_url\":[\"syncloud.meituan.com/be/chp/takeaway/\",\"syncloud.meituan.com/be/chp/takeawayClassifyManagement/\",\"syncloud.meituan.com/be/chp/createSkuToTakeaway/\",\"i.meituan.com/api/address\",\"i.meituan.com/api/maf\",\"mapi.dianping.com/mapi/mlog/applog.bin\",\"mapi.dianping.com/mapi/mlog/zlog.bin\",\"mapi.dianping.com/mapi/mlog/mtmidas.bin\",\"mapi.dianping.com/mapi/mlog/mtzmidas.bin\",\"m.dianping.com/adp/log\",\"mlog.meituan.com/log\",\"mlog.dianping.com/log\",\"m.api.dianping.com/mapi/mlog/applog.bin\",\"m.api.dianping.com/mapi/mlog/zlog.bin\",\"m.api.dianping.com/mapi/mlog/mtmidas.bin\",\"m.api.dianping.com/mapi/mlog/mtzmidas.bin\",\"peisong.meituan.com/collector/report/logdata/short/batch\",\"transcode-video.sankuai.com/pfop\",\"peisong.meituan.com/api/collector/collector/report/logdata/short/batch\",\"api-map.meituan.com/tile/style\",\"api-map01.meituan.com/tile/style\",\"api-map02.meituan.com/tile/style\",\"api-map03.meituan.com/tile/style\",\"api-map04.meituan.com/tile/style\",\"api-map05.meituan.com/tile/style\",\"api-map.meituan.com/tile/source\",\"api-map01.meituan.com/tile/source\",\"api-map02.meituan.com/tile/source\",\"api-map03.meituan.com/tile/source\",\"api-map04.meituan.com/tile/source\",\"api-map05.meituan.com/tile/source\",\"api-map.meituan.com/tile/font\",\"api-map01.meituan.com/tile/font\",\"api-map02.meituan.com/tile/font\",\"api-map03.meituan.com/tile/font\",\"api-map04.meituan.com/tile/font\",\"api-map05.meituan.com/tile/font\",\"api-map.meituan.com/tile/grid\",\"api-map01.meituan.com/tile/grid\",\"api-map02.meituan.com/tile/grid\",\"api-map03.meituan.com/tile/grid\",\"api-map04.meituan.com/tile/grid\",\"api-map05.meituan.com/tile/grid\",\"api-map.meituan.com/tile/dem\",\"api-map01.meituan.com/tile/dem\",\"api-map02.meituan.com/tile/dem\",\"api-map03.meituan.com/tile/dem\",\"api-map04.meituan.com/tile/dem\",\"api-map05.meituan.com/tile/dem\",\"api-map.meituan.com/render/traffic\",\"api-map01.meituan.com/render/traffic\",\"api-map02.meituan.com/render/traffic\",\"api-map03.meituan.com/render/traffic\",\"api-map04.meituan.com/render/traffic\",\"api-map05.meituan.com/render/traffic\",\"api-map.meituan.com/tile/model\",\"api-map01.meituan.com/tile/model\",\"api-map02.meituan.com/tile/model\",\"api-map03.meituan.com/tile/model\",\"api-map04.meituan.com/tile/model\",\"api-map05.meituan.com/tile/model\",\"spotter-relay.sankuai.com/auk01/\",\"spotter-livevod.vip.sankuai.com/recordings/auk01/\",\"e.dianping.com/joy/merchant/newuploadimage\",\"e.51ping.com/joy/merchant/newuploadimage\",\"spotter-relay.sankuai.com/maiot/\",\"wx-shangou.meituan.com/quickbuy/v2/activity/supersale/getLocationByIp\",\"wx-shangou.meituan.com/quickbuy/v2/activity/supersale/bigPromotionHeadInfo\",\"wx-shangou.meituan.com/quickbuy/v2/activity/supersale/bigPromotionResourceInfo\",\"wx-shangou.meituan.com/quickbuy/v1/user/address/posname\",\"wx-shangou.meituan.com/quickbuy/v1/activity/supersale/grab/queryUserSubscription\",\"transcode-video.cloud.test.sankuai.com/pfop\",\"ecom.meituan.com/emis/gw/PublishAssistantQueryService/queryFieldRequirements\",\"ecom.meituan.com/emis/gw/PublishAssistantValidateService/realTimeValidateProduct\",\"ecom.meishi.test.meituan.com/emis/gw/PublishAssistantQueryService/queryFieldRequirements\",\"ecom.meishi.test.meituan.com/emis/gw/PublishAssistantValidateService/realTimeValidateProduct\",\"mlog.51ping.com/adlog\",\"clcadlog.meituan.com/adlog\"],\"close_knb_sign\":0,\"header_white_host\":[],\"init_black_host\":[],\"init_black_url\":[],\"init_white_host\":[],\"init_white_url\":[],\"package_info\":{\"min\":\"4.0.0\",\"url\":\"https://msp.meituan.net/h5guard-files/package-1.1.2.js\",\"url_backup\":\"https://msp-backup.meituan.net/h5guard-files/package-1.1.2.js\",\"ver\":\"1.1.2\"},\"swim_black_host\":[\"ebooking.meituan.com\",\"eb.hotel.test.sankuai.com\",\"eb.vip.sankuai.com\",\"eb.meituan.com\",\"c.qcs.test.sankuai.com\",\"dache.st.meituan.com\",\"dache.meituan.com\"],\"white_host\":[\".dianping.com\",\".meituan.com\",\".sankuai.com\",\".maoyan.com\",\".neixin.cn\",\".51ping.com\",\".baobaoaichi.cn\",\".dper.com\",\".jchunuo.com\"]}"
+        }
+      ]
+    }
+  ]
+}
