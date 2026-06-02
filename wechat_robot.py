@@ -11,6 +11,7 @@ import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 
 router = APIRouter()
 
@@ -146,10 +147,15 @@ def init_scheduler():
     global scheduler
     
     if scheduler is None:
-        scheduler = BackgroundScheduler()
+        scheduler = BackgroundScheduler(
+            timezone="Asia/Shanghai",
+            jobstores={
+                'default': SQLAlchemyJobStore(url='sqlite:///scheduler_jobs.db')
+            }
+        )
         scheduler.start()
         
-        print("✅ 定时任务调度器已启动")
+        print("✅ 定时任务调度器已启动 (时区: Asia/Shanghai)")
         
         load_scheduled_messages()
 
@@ -619,7 +625,7 @@ def crawl_weather_from_website(location: str) -> dict:
     """
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             page = browser.new_page()
             
             page.add_init_script("""
