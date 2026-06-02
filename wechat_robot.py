@@ -1046,7 +1046,11 @@ def get_current_weather(location: str = "长沙市岳麓区"):
 
 class WeatherScheduleRequest(BaseModel):
     send_time: str
-    is_daily: bool = False
+    is_daily: bool
+
+class WeatherQueryRequest(BaseModel):
+    city: str = "长沙"
+    district: str = "岳麓区"
 
 def schedule_weather_task(send_time: str, is_daily: bool):
     """
@@ -1155,6 +1159,79 @@ def schedule_weather_report(request: WeatherScheduleRequest):
                     "success": False,
                     "error": "schedule_failed",
                     "message": f"安排天气播报任务失败: {result}"
+                }
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "success": False,
+                "error": "server_error",
+                "message": f"服务器错误: {str(e)}"
+            }
+        )
+
+@router.post("/weather/query", summary="查询天气信息")
+def query_weather(request: WeatherQueryRequest):
+    """
+    查询指定地区的天气信息
+    
+    Args:
+        request: 查询请求
+            - city: 城市名称（如：长沙、北京、上海）
+            - district: 区县名称（如：岳麓区、朝阳区、浦东新区）
+    
+    Returns:
+        dict: 天气信息查询结果
+    """
+    try:
+        city = request.city
+        district = request.district
+        
+        if not city or not city.strip():
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "success": False,
+                    "error": "empty_city",
+                    "message": "城市不能为空"
+                }
+            )
+        
+        location = f"{city.strip()}{district.strip() if district else ''}"
+        print(f"[DEBUG] 查询天气: {location}")
+        
+        weather_info = crawl_weather_from_website(location)
+        
+        if weather_info.get("success"):
+            dashscope_response = weather_info.get("dashscope_response", {})
+            
+            weather_text = None
+            if dashscope_response and dashscope_response.get("output") and dashscope_response["output"].get("text"):
+                weather_text = dashscope_response["output"]["text"]
+            
+            return {
+                "success": True,
+                "message": "天气信息查询成功",
+                "data": {
+                    "location": location,
+                    "city": city.strip(),
+                    "district": district.strip() if district else "",
+                    "weather_text": weather_text,
+                    "raw_response": dashscope_response,
+                    "query_time": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                }
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "success": False,
+                    "error": "query_failed",
+                    "message": "获取天气信息失败"
                 }
             )
             
