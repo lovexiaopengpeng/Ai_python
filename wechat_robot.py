@@ -613,9 +613,12 @@ def cancel_message(message_id: int):
 init_database()
 init_scheduler()
 
+DASHSCOPE_API_KEY = "sk-26270c8bfdd74a59a59a3ccc4ff29429"
+DASHSCOPE_APP_ID = "97488c47da5946c2b94c3a876b289a3d"
+
 def crawl_weather_from_website(location: str) -> dict:
     """
-    从百度爬取天气信息
+    使用阿里云DashScope获取天气信息
     
     Args:
         location: 地点名称
@@ -623,130 +626,114 @@ def crawl_weather_from_website(location: str) -> dict:
     Returns:
         dict: 天气信息
     """
+    print(f"[DEBUG] 使用DashScope获取天气: {location}")
+    
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
+        url = f"https://dashscope.aliyuncs.com/api/v1/apps/{DASHSCOPE_APP_ID}/completion"
+        
+        headers = {
+            "Authorization": f"Bearer {DASHSCOPE_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        data = {
+            "input": {
+                "prompt": f"{location}天气"
+            },
+            "parameters": {}
+        }
+        
+        response = requests.post(url, json=data, headers=headers, timeout=60)
+        
+        print(f"[DEBUG] DashScope响应状态码: {response.status_code}")
+        
+        if response.status_code == 200:
+            result = response.json()
+            print(f"[DEBUG] DashScope响应: {str(result)[:500]}...")
             
-            page.add_init_script("""
-                Object.defineProperty(navigator, 'webdriver', {
-                    get: () => undefined
-                });
-                Object.defineProperty(navigator, 'plugins', {
-                    get: () => [1, 2, 3, 4, 5]
-                });
-                Object.defineProperty(navigator, 'languages', {
-                    get: () => ['zh-CN', 'zh', 'en']
-                });
-                window.chrome = {
-                    runtime: {}
-                };
-            """)
-            
-            try:
-                url = f"https://www.baidu.com/s?wd={location}天气"
-                print(f'访问: {url}')
-                
-                page.goto(url, wait_until="networkidle", timeout=60000)
-                page.wait_for_timeout(10000)
-                
-                title = page.title()
-                print(f'页面标题: {title}')
-                
-                webdriver_status = page.evaluate("""() => {
-                    return {
-                        webdriver: navigator.webdriver,
-                        plugins: navigator.plugins.length,
-                        languages: navigator.languages
-                    };
-                }""")
-                print(f'navigator.webdriver: {webdriver_status["webdriver"]}')
-                
-                weather_info = page.evaluate("""() => {
-                    const result = {
-                        location: "",
-                        temperature: "未知",
-                        weather: "未知",
-                        humidity: "未知",
-                        wind: "未知",
-                        temperature_range: "未知",
-                        aqi: "未知",
-                        update_time: ""
-                    };
-                    
-                    const mainWeather = document.querySelector('[class*="weather-main"]');
-                    if (mainWeather) {
-                        const text = (mainWeather.innerText || '').trim();
-                        console.log('Main weather text:', text);
-                        
-                        const tempMatch = text.match(/(\d+)°/);
-                        if (tempMatch) {
-                            result.temperature = tempMatch[1] + "°C";
-                        }
-                        
-                        const rangeMatch = text.match(/(\d+)~(\d+)°C/);
-                        if (rangeMatch) {
-                            result.temperature_range = rangeMatch[1] + "°C ~ " + rangeMatch[2] + "°C";
-                        }
-                        
-                        const weatherKeywords = ['晴', '阴', '多云', '小雨', '中雨', '大雨', '暴雨', '雷阵雨', '小雪', '中雪', '大雪', '雾', '霾'];
-                        for (const keyword of weatherKeywords) {
-                            if (text.includes(keyword)) {
-                                result.weather = keyword;
-                                break;
-                            }
-                        }
-                        
-                        const windMatch = text.match(/([东南西北]+风)(\d+级)?/);
-                        if (windMatch) {
-                            result.wind = windMatch[1] + (windMatch[2] || '');
-                        }
-                        
-                        const aqiMatch = text.match(/(\d+)\s+(良|优|轻度污染|中度污染|重度污染)/);
-                        if (aqiMatch) {
-                            result.aqi = aqiMatch[1] + " " + aqiMatch[2];
-                        }
-                    }
-                    
-                    const humidityElements = document.querySelectorAll('*');
-                    for (const el of humidityElements) {
-                        const text = (el.innerText || '').trim();
-                        if (text.includes('湿度')) {
-                            const humidityMatch = text.match(/湿度[：:]?\s*(\d+)%?/);
-                            if (humidityMatch) {
-                                result.humidity = humidityMatch[1] + "%";
-                                break;
-                            }
-                        }
-                    }
-                    
-                    result.update_time = new Date().toLocaleString('zh-CN');
-                    
-                    return result;
-                }""")
-                
-                print(f'提取的天气信息: {weather_info}')
-                
-                browser.close()
-                
+            if result.get("output") and result["output"].get("text"):
+                weather_text = result["output"]["text"]
                 return {
                     "success": True,
                     "location": location,
-                    "temperature": weather_info["temperature"],
-                    "temperature_range": weather_info["temperature_range"],
-                    "weather": weather_info["weather"],
-                    "humidity": weather_info["humidity"],
-                    "wind": weather_info["wind"],
-                    "aqi": weather_info["aqi"],
-                    "update_time": weather_info["update_time"]
+                    "full_text": weather_text,
+                    "temperature": parse_temperature(weather_text),
+                    "temperature_range": parse_temperature_range(weather_text),
+                    "weather": parse_weather(weather_text),
+                    "humidity": parse_humidity(weather_text),
+                    "wind": parse_wind(weather_text),
+                    "aqi": parse_aqi(weather_text),
+                    "update_time": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
-                
-            except Exception as e:
-                browser.close()
-                raise e
-                
+            else:
+                raise Exception(f"响应格式异常: {result}")
+        else:
+            raise Exception(f"请求失败: {response.status_code} - {response.text}")
+            
     except Exception as e:
-        raise Exception(f"爬取天气信息失败: {str(e)}")
+        print(f"[DEBUG] DashScope获取天气失败: {e}")
+        raise
+
+def parse_temperature(text: str) -> str:
+    """从文本中解析当前温度"""
+    import re
+    match = re.search(r'当前温度[：:].*?(\d+)°C', text)
+    if match:
+        return f"{match.group(1)}°C"
+    match = re.search(r'(\d+)°C', text)
+    if match:
+        return f"{match.group(1)}°C"
+    return "未知"
+
+def parse_temperature_range(text: str) -> str:
+    """从文本中解析温度范围"""
+    import re
+    match = re.search(r'(\d+)°C\s*/\s*(\d+)°C', text)
+    if match:
+        return f"{match.group(2)}°C ~ {match.group(1)}°C"
+    return "未知"
+
+def parse_weather(text: str) -> str:
+    """从文本中解析天气状况"""
+    keywords = ['晴', '多云', '阴', '小雨', '中雨', '大雨', '暴雨', '雷阵雨', 
+                '小雪', '中雪', '大雪', '雨夹雪', '雾', '霾', '阵雨', '晴转多云']
+    for kw in keywords:
+        if f"天气状况：{kw}" in text or f"天气状况: {kw}" in text:
+            return kw
+    for kw in keywords:
+        if kw in text:
+            return kw
+    return "未知"
+
+def parse_humidity(text: str) -> str:
+    """从文本中解析湿度"""
+    import re
+    match = re.search(r'湿度[：:].*?(\d+)%', text)
+    if match:
+        return f"{match.group(1)}%"
+    match = re.search(r'(\d+)%', text)
+    if match:
+        return f"{match.group(1)}%"
+    return "未知"
+
+def parse_wind(text: str) -> str:
+    """从文本中解析风力风向"""
+    import re
+    match = re.search(r'风力[：:].*?(\d+级.*?风|风.*?\d+级)', text)
+    if match:
+        return match.group(1)
+    match = re.search(r'(\d+级\s*[东南西北]+风|[东南西北]+风\s*\d+级)', text)
+    if match:
+        return match.group(1)
+    return "未知"
+
+def parse_aqi(text: str) -> str:
+    """从文本中解析空气质量"""
+    import re
+    match = re.search(r'空气质量[：:].*?(\d+)\s*(\S+)', text)
+    if match:
+        return f"{match.group(1)} {match.group(2)}"
+    return "未知"
 
 def crawl_weather_simple(location: str) -> dict:
     """
@@ -972,14 +959,20 @@ def execute_weather_report():
         try:
             weather_info = crawl_weather_from_website(location)
         except Exception as e:
-            print(f"[DEBUG] 爬虫获取天气失败，尝试备用方案: {e}")
+            print(f"[DEBUG] DashScope获取天气失败，尝试备用方案: {e}")
             weather_info = crawl_weather_simple(location)
         
         print(f"[DEBUG] 天气信息: {weather_info}")
         
         if weather_info.get("success"):
-            message = format_weather_message(weather_info)
-            print(f"[DEBUG] 格式化的消息: {message[:100]}...")
+            if weather_info.get("full_text"):
+                message = weather_info["full_text"]
+                print(f"[DEBUG] 使用DashScope返回的完整文本")
+            else:
+                message = format_weather_message(weather_info)
+                print(f"[DEBUG] 使用格式化后的消息")
+            
+            print(f"[DEBUG] 消息预览: {message[:150]}...")
             
             print(f"[DEBUG] 发送天气消息到企业微信群...")
             result = send_wechat_message(message)
