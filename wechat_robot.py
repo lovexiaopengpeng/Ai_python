@@ -1441,11 +1441,14 @@ def cancel_all_weather_jobs():
             except:
                 pass
         
+        update_weather_config("长沙", "岳麓区", "13:50", False)
+        
         return {
             "success": True,
             "message": "已取消所有天气播报定时任务",
             "removed_count": len(removed_jobs),
-            "removed_jobs": removed_jobs
+            "removed_jobs": removed_jobs,
+            "weather_config_enabled": False
         }
     except Exception as e:
         return {
