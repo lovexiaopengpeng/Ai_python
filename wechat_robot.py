@@ -624,7 +624,7 @@ def crawl_weather_from_website(location: str) -> dict:
         location: 地点名称
     
     Returns:
-        dict: 天气信息
+        dict: 阿里云DashScope原始响应
     """
     print(f"[DEBUG] 使用DashScope获取天气: {location}")
     
@@ -651,22 +651,12 @@ def crawl_weather_from_website(location: str) -> dict:
             result = response.json()
             print(f"[DEBUG] DashScope响应: {str(result)[:500]}...")
             
-            if result.get("output") and result["output"].get("text"):
-                weather_text = result["output"]["text"]
-                return {
-                    "success": True,
-                    "location": location,
-                    "full_text": weather_text,
-                    "temperature": parse_temperature(weather_text),
-                    "temperature_range": parse_temperature_range(weather_text),
-                    "weather": parse_weather(weather_text),
-                    "humidity": parse_humidity(weather_text),
-                    "wind": parse_wind(weather_text),
-                    "aqi": parse_aqi(weather_text),
-                    "update_time": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                }
-            else:
-                raise Exception(f"响应格式异常: {result}")
+            return {
+                "success": True,
+                "location": location,
+                "dashscope_response": result,
+                "update_time": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
         else:
             raise Exception(f"请求失败: {response.status_code} - {response.text}")
             
@@ -965,9 +955,13 @@ def execute_weather_report():
         print(f"[DEBUG] 天气信息: {weather_info}")
         
         if weather_info.get("success"):
-            if weather_info.get("full_text"):
-                message = weather_info["full_text"]
+            dashscope_response = weather_info.get("dashscope_response", {})
+            if dashscope_response and dashscope_response.get("output") and dashscope_response["output"].get("text"):
+                message = dashscope_response["output"]["text"]
                 print(f"[DEBUG] 使用DashScope返回的完整文本")
+            elif weather_info.get("full_text"):
+                message = weather_info["full_text"]
+                print(f"[DEBUG] 使用备用方案返回的完整文本")
             else:
                 message = format_weather_message(weather_info)
                 print(f"[DEBUG] 使用格式化后的消息")
