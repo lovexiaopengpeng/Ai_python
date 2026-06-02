@@ -4,8 +4,8 @@
 
 - **服务地址**: `https://ai-python-3x1q.onrender.com`
 - **本地地址**: `http://localhost:8000`
-- **文档版本**: v1.0
-- **更新时间**: 2026-05-28
+- **文档版本**: v1.1
+- **更新时间**: 2026-06-02
 
 ---
 
@@ -15,7 +15,10 @@
 2. [新闻资讯接口](#新闻资讯接口)
 3. [股票接口](#股票接口)
 4. [虚拟币接口](#虚拟币接口)
-5. [响应状态码](#响应状态码)
+5. [美团美食接口](#美团美食接口)
+6. [企业微信机器人接口](#企业微信机器人接口)
+7. [天气播报接口](#天气播报接口)
+8. [响应状态码](#响应状态码)
 
 ---
 
@@ -672,6 +675,467 @@ curl -X GET https://ai-python-3x1q.onrender.com/crypto/favorites -H "userid: 285
 
 ---
 
+## 美团美食接口
+
+### 1. 获取美团外卖商家列表
+
+**接口地址**: `GET /meituan/food`
+
+**功能描述**: 获取美团外卖商家列表
+
+**请求头**:
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| userid | string | 是 | 用户ID |
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "count": 20,
+  "userid": "285617",
+  "data": [
+    {
+      "name": "肯德基(万达广场店)",
+      "rating": 4.8,
+      "min_price": 25,
+      "delivery_time": "30分钟",
+      "distance": "1.2km",
+      "tags": ["快餐", "炸鸡"],
+      "icon": "https://xxx"
+    }
+  ],
+  "update_time": "2026-06-02 16:30:00"
+}
+```
+
+---
+
+## 企业微信机器人接口
+
+### 1. 发送企业微信消息（支持定时）
+
+**接口地址**: `POST /wechat/send`
+
+**功能描述**: 发送企业微信消息，支持定时发送
+
+**请求体**:
+```json
+{
+  "is_daily": true,
+  "send_time": "14:30",
+  "content": "你好呀，今天又是nice的一天呀"
+}
+```
+
+**请求参数说明**:
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| is_daily | boolean | 是 | 是否每日定时发送 |
+| send_time | string | 是 | 发送时间，格式：HH:MM |
+| content | string | 是 | 发送内容 |
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "message": "消息任务已创建",
+  "data": {
+    "message_id": 1,
+    "is_daily": true,
+    "send_time": "14:30",
+    "status": "scheduled"
+  }
+}
+```
+
+---
+
+### 2. 立即发送企业微信消息
+
+**接口地址**: `POST /wechat/send-now`
+
+**功能描述**: 立即发送企业微信消息
+
+**请求参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| content | string | 是 | 发送内容 |
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "message": "消息发送成功"
+}
+```
+
+**使用示例**:
+```bash
+# 立即发送消息
+curl -X POST "https://ai-python-3x1q.onrender.com/wechat/send-now?content=你好世界"
+```
+
+---
+
+### 3. 获取企业微信消息列表
+
+**接口地址**: `GET /wechat/messages`
+
+**功能描述**: 获取企业微信消息列表
+
+**请求参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| status | string | 否 | 筛选状态（scheduled/sent/failed/cancelled） |
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "count": 3,
+  "messages": [
+    {
+      "id": 1,
+      "is_daily": true,
+      "send_time": "14:30",
+      "content": "你好呀",
+      "status": "scheduled",
+      "created_at": "2026-06-02 10:00:00"
+    }
+  ]
+}
+```
+
+---
+
+### 4. 获取单个企业微信消息
+
+**接口地址**: `GET /wechat/messages/{message_id}`
+
+**功能描述**: 获取单个企业微信消息详情
+
+**路径参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| message_id | integer | 是 | 消息ID |
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "message": {
+    "id": 1,
+    "is_daily": true,
+    "send_time": "14:30",
+    "content": "你好呀",
+    "status": "scheduled"
+  }
+}
+```
+
+---
+
+### 5. 取消企业微信消息
+
+**接口地址**: `DELETE /wechat/messages/{message_id}`
+
+**功能描述**: 取消企业微信消息
+
+**路径参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| message_id | integer | 是 | 消息ID |
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "message": "消息已取消"
+}
+```
+
+---
+
+## 天气播报接口
+
+### 1. 获取天气播报配置
+
+**接口地址**: `GET /weather/config`
+
+**功能描述**: 获取天气播报配置
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "config": {
+    "id": 1,
+    "city": "长沙",
+    "district": "岳麓区",
+    "send_time": "13:50",
+    "enabled": true
+  }
+}
+```
+
+---
+
+### 2. 更新天气播报配置
+
+**接口地址**: `POST /weather/config`
+
+**功能描述**: 更新天气播报配置
+
+**请求体**:
+```json
+{
+  "city": "长沙",
+  "district": "岳麓区",
+  "send_time": "13:50",
+  "enabled": true
+}
+```
+
+**请求参数说明**:
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| city | string | 是 | 城市名称 |
+| district | string | 是 | 区县名称 |
+| send_time | string | 是 | 发送时间，格式：HH:MM |
+| enabled | boolean | 是 | 是否启用 |
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "message": "配置已更新"
+}
+```
+
+---
+
+### 3. 立即发送天气播报
+
+**接口地址**: `POST /weather/send-now`
+
+**功能描述**: 立即发送天气播报
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "message": "天气播报已发送"
+}
+```
+
+---
+
+### 4. 获取当前天气信息
+
+**接口地址**: `GET /weather/current`
+
+**功能描述**: 获取当前天气信息（使用阿里云 DashScope API）
+
+**请求参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| location | string | 否 | 地点名称，默认：长沙市岳麓区 |
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "message": "天气信息获取成功",
+  "data": {
+    "success": true,
+    "location": "长沙市岳麓区",
+    "dashscope_response": {
+      "output": {
+        "text": "🌤️ 【每日天气播报】...",
+        "finish_reason": "stop"
+      },
+      "usage": {
+        "models": [
+          {
+            "input_tokens": 10,
+            "output_tokens": 200
+          }
+        ]
+      }
+    },
+    "update_time": "2026-06-02 16:30:00"
+  }
+}
+```
+
+**使用示例**:
+```bash
+# 获取长沙市岳麓区天气
+curl "https://ai-python-3x1q.onrender.com/weather/current?location=长沙市岳麓区"
+```
+
+---
+
+### 5. 安排天气播报任务
+
+**接口地址**: `POST /weather/schedule`
+
+**功能描述**: 安排天气播报定时任务
+
+**请求体**:
+```json
+{
+  "send_time": "14:30",
+  "is_daily": true
+}
+```
+
+**请求参数说明**:
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| send_time | string | 是 | 发送时间，格式：HH:MM |
+| is_daily | boolean | 是 | 是否每日发送 |
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "message": "每日天气播报任务已安排",
+  "data": {
+    "send_time": "14:30",
+    "is_daily": true,
+    "job_id": "weather_custom_daily_14:30",
+    "location": "长沙市岳麓区"
+  }
+}
+```
+
+---
+
+### 6. 获取所有天气播报任务
+
+**接口地址**: `GET /weather/jobs`
+
+**功能描述**: 获取所有天气播报定时任务
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "count": 1,
+  "jobs": [
+    {
+      "id": "weather_custom_daily_14:30",
+      "type": "daily",
+      "trigger": "cron[hour='14', minute='30']",
+      "next_run_time": "2026-06-03 14:30:00+08:00"
+    }
+  ]
+}
+```
+
+---
+
+### 7. 天气播报调试接口
+
+**接口地址**: `GET /weather/debug`
+
+**功能描述**: 获取天气播报调试信息
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "data": {
+    "scheduler_running": true,
+    "current_time": "2026-06-02 16:30:00",
+    "timezone": "Asia/Shanghai",
+    "weather_config": {
+      "id": 1,
+      "city": "长沙",
+      "district": "岳麓区",
+      "send_time": "13:50",
+      "enabled": true
+    },
+    "jobs_count": 1,
+    "jobs": [
+      {
+        "id": "weather_custom_daily_14:30",
+        "next_run_time": "2026-06-03 14:30:00+08:00"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 8. 测试天气播报功能
+
+**接口地址**: `POST /weather/test`
+
+**功能描述**: 立即测试天气播报功能
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "message": "测试消息已发送"
+}
+```
+
+---
+
+### 9. 取消指定的天气播报任务
+
+**接口地址**: `POST /weather/cancel/{job_id}`
+
+**功能描述**: 取消指定的天气播报定时任务
+
+**路径参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| job_id | string | 是 | 任务ID |
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "message": "任务 weather_custom_daily_14:30 已取消"
+}
+```
+
+**使用示例**:
+```bash
+# 取消指定任务
+curl -X POST https://ai-python-3x1q.onrender.com/weather/cancel/weather_custom_daily_14:30
+```
+
+---
+
+### 10. 取消所有天气播报任务
+
+**接口地址**: `POST /weather/cancel-all`
+
+**功能描述**: 取消所有天气播报定时任务
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "message": "已取消所有天气播报定时任务",
+  "removed_count": 2,
+  "removed_jobs": [
+    "weather_custom_daily_14:30",
+    "weather_report_daily"
+  ],
+  "weather_config_enabled": false
+}
+```
+
+---
+
 ## 响应状态码
 
 | 状态码 | 说明 | 典型场景 |
@@ -702,6 +1166,28 @@ curl -X GET https://ai-python-3x1q.onrender.com/crypto/top-100 \
 # 获取新闻资讯
 curl -X GET "https://ai-python-3x1q.onrender.com/news/hot?type=finance" \
   -H "userid: 285617"
+
+# 立即发送企业微信消息
+curl -X POST "https://ai-python-3x1q.onrender.com/wechat/send-now?content=你好世界"
+
+# 安排定时发送企业微信消息
+curl -X POST https://ai-python-3x1q.onrender.com/wechat/send \
+  -H "Content-Type: application/json" \
+  -d '{"is_daily": true, "send_time": "14:30", "content": "你好呀"}'
+
+# 获取长沙市岳麓区天气
+curl "https://ai-python-3x1q.onrender.com/weather/current?location=长沙市岳麓区"
+
+# 安排每日天气播报任务
+curl -X POST https://ai-python-3x1q.onrender.com/weather/schedule \
+  -H "Content-Type: application/json" \
+  -d '{"send_time": "14:30", "is_daily": true}'
+
+# 查看所有天气播报任务
+curl https://ai-python-3x1q.onrender.com/weather/jobs
+
+# 取消指定天气播报任务
+curl -X POST https://ai-python-3x1q.onrender.com/weather/cancel/weather_custom_daily_14:30
 ```
 
 ---
@@ -712,5 +1198,6 @@ curl -X GET "https://ai-python-3x1q.onrender.com/news/hot?type=finance" \
 2. Token有效期为24小时，过期后需要重新登录
 3. 股票和虚拟币数据来自实时API，可能存在延迟
 4. 部署地址可能因服务器负载原因响应较慢
-5. 数据来源包括：新浪财经、WSJ、Yahoo Finance、CoinGecko、Binance等
+5. 数据来源包括：新浪财经、WSJ、Yahoo Finance、CoinGecko、Binance、阿里云 DashScope 等
 6. 买入建议仅供参考，不构成投资建议
+7. 天气播报任务使用 `Asia/Shanghai` 时区（北京时间）
