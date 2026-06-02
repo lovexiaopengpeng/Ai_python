@@ -1005,7 +1005,7 @@ def init_weather_scheduler():
             send_time = config.get("send_time", "13:50")
             hour, minute = map(int, send_time.split(":"))
             
-            trigger = CronTrigger(hour=hour, minute=minute)
+            trigger = CronTrigger(hour=hour, minute=minute, timezone="Asia/Shanghai")
             scheduler.add_job(
                 execute_weather_report,
                 trigger=trigger,
@@ -1246,7 +1246,7 @@ def schedule_weather_task(send_time: str, is_daily: bool):
         hour, minute = map(int, send_time.split(":"))
         
         if is_daily:
-            trigger = CronTrigger(hour=hour, minute=minute)
+            trigger = CronTrigger(hour=hour, minute=minute, timezone="Asia/Shanghai")
             job_id = f"weather_custom_daily_{send_time}"
             scheduler.add_job(
                 execute_weather_report,
@@ -1256,13 +1256,13 @@ def schedule_weather_task(send_time: str, is_daily: bool):
             )
             print(f"✅ 已添加每日天气播报任务: 时间 {send_time}")
         else:
-            now = datetime.datetime.now()
+            now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
             target_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
             
             if target_time <= now:
                 target_time += datetime.timedelta(days=1)
             
-            trigger = DateTrigger(run_date=target_time)
+            trigger = DateTrigger(run_date=target_time, timezone="Asia/Shanghai")
             job_id = f"weather_custom_once_{send_time}_{target_time.strftime('%Y%m%d')}"
             scheduler.add_job(
                 execute_weather_report,
