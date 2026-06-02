@@ -1393,6 +1393,37 @@ def debug_weather():
             "error": str(e)
         }
 
+@router.get("/weather/jobs", summary="获取所有天气播报定时任务")
+def get_all_weather_jobs():
+    """
+    获取所有天气播报定时任务
+    
+    Returns:
+        dict: 任务列表
+    """
+    try:
+        jobs = []
+        if scheduler is not None:
+            for job in scheduler.get_jobs():
+                if "weather" in job.id:
+                    jobs.append({
+                        "id": job.id,
+                        "type": "daily" if "daily" in job.id else "once",
+                        "trigger": str(job.trigger),
+                        "next_run_time": str(job.next_run_time) if job.next_run_time else None
+                    })
+        
+        return {
+            "success": True,
+            "count": len(jobs),
+            "jobs": jobs
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @router.post("/weather/test", summary="测试天气播报功能")
 def test_weather():
     """
