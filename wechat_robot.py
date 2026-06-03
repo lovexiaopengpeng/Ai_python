@@ -40,27 +40,79 @@ def db_execute(cursor, query, params=()):
     query = query.replace("%s", "?")
     cursor.execute(query, params)
 
-def send_wechat_message(content: str) -> dict:
+def send_wechat_message(content: str, msg_type: str = "text", payload: dict = None) -> dict:
     """
     发送企业微信消息
     
     Args:
-        content: 消息内容
+        content: 消息内容（text/markdown类型使用）
+        msg_type: 消息类型：text、markdown、image、news
+        payload: 自定义消息体（用于发送复杂消息类型）
     
     Returns:
         dict: 发送结果
     """
     try:
-        payload = {
-            "msgtype": "text",
-            "text": {
-                "content": content
-            }
-        }
+        if payload:
+            final_payload = payload
+        else:
+            if msg_type == "text":
+                final_payload = {
+                    "msgtype": "text",
+                    "text": {
+                        "content": content
+                    }
+                }
+            elif msg_type == "markdown":
+                final_payload = {
+                    "msgtype": "markdown",
+                    "markdown": {
+                        "content": content
+                    }
+                }
+            elif msg_type == "image":
+                final_payload = {
+                    "msgtype": "image",
+                    "image": {
+                        "base64": "",
+                        "md5": ""
+                    }
+                }
+                if content:
+                    try:
+                        import base64
+                        import hashlib
+                        if content.startswith("http"):
+                            response = requests.get(content, timeout=10)
+                            image_data = response.content
+                        else:
+                            with open(content, "rb") as f:
+                                image_data = f.read()
+                        final_payload["image"]["base64"] = base64.b64encode(image_data).decode("utf-8")
+                        final_payload["image"]["md5"] = hashlib.md5(image_data).hexdigest()
+                    except Exception as e:
+                        return {
+                            "success": False,
+                            "error": f"处理图片失败: {str(e)}"
+                        }
+            elif msg_type == "news":
+                final_payload = {
+                    "msgtype": "news",
+                    "news": {
+                        "articles": []
+                    }
+                }
+            else:
+                final_payload = {
+                    "msgtype": "text",
+                    "text": {
+                        "content": content
+                    }
+                }
         
         response = requests.post(
             WEBHOOK_URL,
-            json=payload,
+            json=final_payload,
             headers={"Content-Type": "application/json"},
             timeout=10
         )
@@ -203,7 +255,7 @@ def schedule_message_task(message_id: int, is_daily: bool, send_time: str):
         hour, minute = map(int, send_time.split(":"))
         
         if is_daily:
-            trigger = CronTrigger(hour=hour, minute=minute)
+            trigger = CronTrigger(hour=hour, minute=minute, timezone="Asia/Shanghai")
             scheduler.add_job(
                 execute_scheduled_message,
                 trigger=trigger,
@@ -211,15 +263,15 @@ def schedule_message_task(message_id: int, is_daily: bool, send_time: str):
                 args=[message_id],
                 replace_existing=True
             )
-            print(f"✅ 已添加每日定时任务: 消息 {message_id}, 时间 {send_time}")
+            print(f"✅ 已添加每日定时任务: 消息 {message_id}, 时间 {send_time} (北京时间)")
         else:
-            now = datetime.datetime.now()
+            now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
             target_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
             
             if target_time <= now:
                 target_time += datetime.timedelta(days=1)
             
-            trigger = DateTrigger(run_date=target_time)
+            trigger = DateTrigger(run_date=target_time, timezone="Asia/Shanghai")
             scheduler.add_job(
                 execute_scheduled_message,
                 trigger=trigger,
@@ -227,7 +279,7 @@ def schedule_message_task(message_id: int, is_daily: bool, send_time: str):
                 args=[message_id],
                 replace_existing=True
             )
-            print(f"✅ 已添加单次定时任务: 消息 {message_id}, 时间 {target_time}")
+            print(f"✅ 已添加单次定时任务: 消息 {message_id}, 时间 {target_time} (北京时间)")
             
     except Exception as e:
         print(f"添加定时任务时发生错误: {e}")
@@ -941,14 +993,14 @@ def update_weather_config_api(request: WeatherConfigRequest):
                 
                 if request.enabled:
                     hour, minute = map(int, request.send_time.strip().split(":"))
-                    trigger = CronTrigger(hour=hour, minute=minute)
+                    trigger = CronTrigger(hour=hour, minute=minute, timezone="Asia/Shanghai")
                     scheduler.add_job(
                         execute_weather_report,
                         trigger=trigger,
                         id="weather_report_daily",
                         replace_existing=True
                     )
-                    print(f"✅ 已更新每日天气播报任务: 时间 {request.send_time}")
+                    print(f"✅ 已更新每日天气播报任务: 时间 {request.send_time} (北京时间)")
             
             return {
                 "success": True,
