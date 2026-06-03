@@ -6,6 +6,8 @@ import jwt
 import datetime
 import os
 from pathlib import Path
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 
 DATABASE_PATH = Path("./user_database.db")
 SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key_here_change_in_production")
@@ -23,6 +25,8 @@ if DATABASE_URL and DATABASE_URL.startswith("postgresql"):
         DB_TYPE = "sqlite"
 
 app = FastAPI(title="用户认证与热点服务", description="提供用户注册、登录和热点资讯服务")
+
+scheduler = None
 
 from news_hot import router as news_router
 app.include_router(news_router)
@@ -677,7 +681,31 @@ def get_all_users():
 def health_check():
     return {"status": "ok", "service": "user-auth-service", "db_type": DB_TYPE}
 
+def init_main_scheduler():
+    """
+    初始化主调度器
+    """
+    global scheduler
+    
+    if scheduler is None:
+        scheduler = BackgroundScheduler(
+            timezone="Asia/Shanghai"
+        )
+        scheduler.start()
+        
+        print("✅ 主调度器已启动 (时区: Asia/Shanghai)")
+        
+        scheduler.add_job(
+            health_check,
+            trigger=IntervalTrigger(minutes=30, timezone="Asia/Shanghai"),
+            id="health_check_interval",
+            replace_existing=True
+        )
+        print("✅ 已添加健康检查定时任务：每30分钟执行一次")
+
 init_database()
+
+init_main_scheduler()
 
 if __name__ == "__main__":
     import uvicorn
