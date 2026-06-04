@@ -13,16 +13,25 @@ DATABASE_PATH = Path("./user_database.db")
 SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key_here_change_in_production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
-DATABASE_URL = os.getenv("DATABASE_URL")
+
+DEFAULT_MYSQL_URL = "mysql://user_db:user_db_mm@127.0.0.1:3306/user_db"
+DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_MYSQL_URL)
 
 DB_TYPE = "sqlite"
-if DATABASE_URL and DATABASE_URL.startswith("postgresql"):
-    DB_TYPE = "postgresql"
-    try:
-        import psycopg2
-        from psycopg2.extras import RealDictCursor
-    except ImportError:
-        DB_TYPE = "sqlite"
+if DATABASE_URL:
+    if DATABASE_URL.startswith("postgresql"):
+        DB_TYPE = "postgresql"
+        try:
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
+        except ImportError:
+            DB_TYPE = "sqlite"
+    elif DATABASE_URL.startswith("mysql"):
+        DB_TYPE = "mysql"
+        try:
+            import pymysql
+        except ImportError:
+            DB_TYPE = "sqlite"
 
 app = FastAPI(title="用户认证与热点服务", description="提供用户注册、登录和热点资讯服务")
 
@@ -46,13 +55,34 @@ def get_db_connection():
             return psycopg2.connect(DATABASE_URL, sslmode="require")
         except Exception as e:
             print(f"PostgreSQL连接失败，回退到SQLite: {e}")
+    elif DB_TYPE == "mysql" and DATABASE_URL:
+        try:
+            # 解析MySQL URL，格式: mysql://user:password@host:port/dbname
+            from urllib.parse import urlparse
+            url = urlparse(DATABASE_URL)
+            user = url.username
+            password = url.password
+            host = url.hostname
+            port = url.port or 3306
+            dbname = url.path[1:]  # 去掉开头的/
+            
+            return pymysql.connect(
+                host=host,
+                port=port,
+                user=user,
+                password=password,
+                database=dbname,
+                charset="utf8mb4"
+            )
+        except Exception as e:
+            print(f"MySQL连接失败，回退到SQLite: {e}")
     
     return sqlite3.connect(str(DATABASE_PATH))
 
 def init_database():
     conn = get_db_connection()
     
-    if DB_TYPE == "postgresql":
+    if DB_TYPE in ["postgresql", "mysql"]:
         cursor = conn.cursor()
     else:
         cursor = conn.cursor()
@@ -83,8 +113,8 @@ def init_database():
     
     try:
         cursor.execute(create_table_sql)
-        if DB_TYPE == "postgresql":
-            # PostgreSQL 版本的收藏表创建语句
+        if DB_TYPE in ["postgresql", "mysql"]:
+            # PostgreSQL/MySQL 版本的收藏表创建语句
             create_favorites_table_sql_postgres = """
                 CREATE TABLE IF NOT EXISTS crypto_favorites (
                     id SERIAL PRIMARY KEY,
@@ -100,7 +130,7 @@ def init_database():
             cursor.execute(create_favorites_table_sql)
         
         # 创建取消收藏列表表
-        if DB_TYPE == "postgresql":
+        if DB_TYPE in ["postgresql", "mysql"]:
             create_removed_table_sql = """
                 CREATE TABLE IF NOT EXISTS crypto_favorites_removed (
                     id SERIAL PRIMARY KEY,
@@ -180,7 +210,7 @@ def generate_user_id() -> str:
     return str(random.randint(1000, 999999))
 
 def db_execute(cursor, query, params=()):
-    if DB_TYPE == "postgresql":
+    if DB_TYPE in ["postgresql", "mysql"]:
         cursor.execute(query, params)
     else:
         query = query.replace("%s", "?")
@@ -221,7 +251,7 @@ def register(req: RegisterRequest):
     
     conn = get_db_connection()
     
-    if DB_TYPE == "postgresql":
+    if DB_TYPE in ["postgresql", "mysql"]:
         cursor = conn.cursor()
     else:
         cursor = conn.cursor()
@@ -275,7 +305,7 @@ def register(req: RegisterRequest):
 def login(req: LoginRequest):
     conn = get_db_connection()
     
-    if DB_TYPE == "postgresql":
+    if DB_TYPE in ["postgresql", "mysql"]:
         cursor = conn.cursor()
     else:
         cursor = conn.cursor()
@@ -376,7 +406,7 @@ def reset_password(req: ResetPasswordRequest):
     
     conn = get_db_connection()
     
-    if DB_TYPE == "postgresql":
+    if DB_TYPE in ["postgresql", "mysql"]:
         cursor = conn.cursor()
     else:
         cursor = conn.cursor()
@@ -472,7 +502,7 @@ def logout(req: LogoutRequest, current_user: Dict = Depends(get_current_user), u
     
     conn = get_db_connection()
     
-    if DB_TYPE == "postgresql":
+    if DB_TYPE in ["postgresql", "mysql"]:
         cursor = conn.cursor()
     else:
         cursor = conn.cursor()
@@ -510,7 +540,7 @@ def logout(req: LogoutRequest, current_user: Dict = Depends(get_current_user), u
 def get_user_profile(current_user: Dict = Depends(get_current_user)):
     conn = get_db_connection()
     
-    if DB_TYPE == "postgresql":
+    if DB_TYPE in ["postgresql", "mysql"]:
         cursor = conn.cursor()
     else:
         cursor = conn.cursor()
@@ -546,7 +576,7 @@ def get_user_profile(current_user: Dict = Depends(get_current_user)):
 def delete_user(req: DeleteAccountRequest):
     conn = get_db_connection()
     
-    if DB_TYPE == "postgresql":
+    if DB_TYPE in ["postgresql", "mysql"]:
         cursor = conn.cursor()
     else:
         cursor = conn.cursor()
@@ -619,7 +649,7 @@ def verify_token_endpoint(req: TokenRequest):
     
     conn = get_db_connection()
     
-    if DB_TYPE == "postgresql":
+    if DB_TYPE in ["postgresql", "mysql"]:
         cursor = conn.cursor()
     else:
         cursor = conn.cursor()
@@ -653,7 +683,7 @@ def verify_token_endpoint(req: TokenRequest):
 def get_all_users():
     conn = get_db_connection()
     
-    if DB_TYPE == "postgresql":
+    if DB_TYPE in ["postgresql", "mysql"]:
         cursor = conn.cursor()
     else:
         cursor = conn.cursor()

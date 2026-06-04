@@ -2,10 +2,10 @@
 
 ## 基础信息
 
-- **服务地址**: `https://ai-python-3x1q.onrender.com`
+- **服务地址**: `http://111.230.110.33`
 - **本地地址**: `http://localhost:8000`
-- **文档版本**: v1.1
-- **更新时间**: 2026-06-02
+- **文档版本**: v1.2
+- **更新时间**: 2026-06-04
 
 ---
 
@@ -558,10 +558,10 @@
 **使用示例**:
 ```bash
 # 查询比特币详情
-curl -X GET https://ai-python-3x1q.onrender.com/crypto/coin/BTC -H "userid: 285617"
+curl -X GET http://111.230.110.33/crypto/coin/BTC -H "userid: 285617"
 
 # 查询以太坊详情
-curl -X GET https://ai-python-3x1q.onrender.com/crypto/coin/ETH -H "userid: 285617"
+curl -X GET http://111.230.110.33/crypto/coin/ETH -H "userid: 285617"
 ```
 
 ---
@@ -596,7 +596,7 @@ curl -X GET https://ai-python-3x1q.onrender.com/crypto/coin/ETH -H "userid: 2856
 **使用示例**:
 ```bash
 # 收藏比特币
-curl -X POST https://ai-python-3x1q.onrender.com/crypto/favorites \
+curl -X POST http://111.230.110.33/crypto/favorites \
     -H "Content-Type: application/json" \
     -H "userid: 285617" \
     -d '{"symbol": "BTC", "name": "Bitcoin"}'
@@ -631,7 +631,7 @@ curl -X POST https://ai-python-3x1q.onrender.com/crypto/favorites \
 **使用示例**:
 ```bash
 # 取消收藏比特币
-curl -X DELETE https://ai-python-3x1q.onrender.com/crypto/favorites/BTC -H "userid: 285617"
+curl -X DELETE http://111.230.110.33/crypto/favorites/BTC -H "userid: 285617"
 ```
 
 ---
@@ -670,7 +670,7 @@ curl -X DELETE https://ai-python-3x1q.onrender.com/crypto/favorites/BTC -H "user
 **使用示例**:
 ```bash
 # 获取收藏列表
-curl -X GET https://ai-python-3x1q.onrender.com/crypto/favorites -H "userid: 285617"
+curl -X GET http://111.230.110.33/crypto/favorites -H "userid: 285617"
 ```
 
 ---
@@ -773,7 +773,7 @@ curl -X GET https://ai-python-3x1q.onrender.com/crypto/favorites -H "userid: 285
 **使用示例**:
 ```bash
 # 立即发送消息
-curl -X POST "https://ai-python-3x1q.onrender.com/wechat/send-now?content=你好世界"
+curl -X POST "http://111.230.110.33/wechat/send-now?content=你好世界"
 ```
 
 ---
@@ -972,7 +972,7 @@ curl -X POST "https://ai-python-3x1q.onrender.com/wechat/send-now?content=你好
 **使用示例**:
 ```bash
 # 获取长沙市岳麓区天气
-curl "https://ai-python-3x1q.onrender.com/weather/current?location=长沙市岳麓区"
+curl "http://111.230.110.33/weather/current?location=长沙市岳麓区"
 ```
 
 ---
@@ -1109,7 +1109,7 @@ curl "https://ai-python-3x1q.onrender.com/weather/current?location=长沙市岳�
 **使用示例**:
 ```bash
 # 取消指定任务
-curl -X POST https://ai-python-3x1q.onrender.com/weather/cancel/weather_custom_daily_14:30
+curl -X POST http://111.230.110.33/weather/cancel/weather_custom_daily_14:30
 ```
 
 ---
@@ -1155,39 +1155,39 @@ curl -X POST https://ai-python-3x1q.onrender.com/weather/cancel/weather_custom_d
 
 ```bash
 # 用户登录
-curl -X POST https://ai-python-3x1q.onrender.com/login \
+curl -X POST http://111.230.110.33/login \
   -H "Content-Type: application/json" \
   -d '{"username": "13888888888", "password": "88888888"}'
 
 # 获取虚拟币排名
-curl -X GET https://ai-python-3x1q.onrender.com/crypto/top-100 \
+curl -X GET http://111.230.110.33/crypto/top-100 \
   -H "userid: 285617"
 
 # 获取新闻资讯
-curl -X GET "https://ai-python-3x1q.onrender.com/news/hot?type=finance" \
+curl -X GET "http://111.230.110.33/news/hot?type=finance" \
   -H "userid: 285617"
 
 # 立即发送企业微信消息
-curl -X POST "https://ai-python-3x1q.onrender.com/wechat/send-now?content=你好世界"
+curl -X POST "http://111.230.110.33/wechat/send-now?content=你好世界"
 
 # 安排定时发送企业微信消息
-curl -X POST https://ai-python-3x1q.onrender.com/wechat/send \
+curl -X POST http://111.230.110.33/wechat/send \
   -H "Content-Type: application/json" \
   -d '{"is_daily": true, "send_time": "14:30", "content": "你好呀"}'
 
 # 获取长沙市岳麓区天气
-curl "https://ai-python-3x1q.onrender.com/weather/current?location=长沙市岳麓区"
+curl "http://111.230.110.33/weather/current?location=长沙市岳麓区"
 
 # 安排每日天气播报任务
-curl -X POST https://ai-python-3x1q.onrender.com/weather/schedule \
+curl -X POST http://111.230.110.33/weather/schedule \
   -H "Content-Type: application/json" \
   -d '{"send_time": "14:30", "is_daily": true}'
 
 # 查看所有天气播报任务
-curl https://ai-python-3x1q.onrender.com/weather/jobs
+curl http://111.230.110.33/weather/jobs
 
 # 取消指定天气播报任务
-curl -X POST https://ai-python-3x1q.onrender.com/weather/cancel/weather_custom_daily_14:30
+curl -X POST http://111.230.110.33/weather/cancel/weather_custom_daily_14:30
 ```
 
 ---

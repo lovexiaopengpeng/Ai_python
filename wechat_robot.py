@@ -10,12 +10,30 @@ import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 
 router = APIRouter()
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "user_database.db")
 WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=4ef6e7f3-b7d5-437f-940c-213fd6733be9"
+
+DEFAULT_MYSQL_URL = "mysql://user_db:user_db_mm@127.0.0.1:3306/user_db"
+DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_MYSQL_URL)
+
+DB_TYPE = "sqlite"
+if DATABASE_URL:
+    if DATABASE_URL.startswith("postgresql"):
+        DB_TYPE = "postgresql"
+        try:
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
+        except ImportError:
+            DB_TYPE = "sqlite"
+    elif DATABASE_URL.startswith("mysql"):
+        DB_TYPE = "mysql"
+        try:
+            import pymysql
+        except ImportError:
+            DB_TYPE = "sqlite"
 
 scheduler = None
 
@@ -34,11 +52,41 @@ class WeChatMessage(BaseModel):
     updated_at: str
 
 def get_db_connection():
+    if DB_TYPE == "postgresql" and DATABASE_URL:
+        try:
+            return psycopg2.connect(DATABASE_URL, sslmode="require")
+        except Exception as e:
+            print(f"PostgreSQL连接失败，回退到SQLite: {e}")
+    elif DB_TYPE == "mysql" and DATABASE_URL:
+        try:
+            # 解析MySQL URL，格式: mysql://user:password@host:port/dbname
+            from urllib.parse import urlparse
+            url = urlparse(DATABASE_URL)
+            user = url.username
+            password = url.password
+            host = url.hostname
+            port = url.port or 3306
+            dbname = url.path[1:]  # 去掉开头的/
+            
+            return pymysql.connect(
+                host=host,
+                port=port,
+                user=user,
+                password=password,
+                database=dbname,
+                charset="utf8mb4"
+            )
+        except Exception as e:
+            print(f"MySQL连接失败，回退到SQLite: {e}")
+    
     return sqlite3.connect(DB_PATH)
 
 def db_execute(cursor, query, params=()):
-    query = query.replace("%s", "?")
-    cursor.execute(query, params)
+    if DB_TYPE in ["postgresql", "mysql"]:
+        cursor.execute(query, params)
+    else:
+        query = query.replace("%s", "?")
+        cursor.execute(query, params)
 
 def send_wechat_message(content: str, msg_type: str = "text", payload: dict = None) -> dict:
     """
@@ -199,10 +247,7 @@ def init_scheduler():
     
     if scheduler is None:
         scheduler = BackgroundScheduler(
-            timezone="Asia/Shanghai",
-            jobstores={
-                'default': SQLAlchemyJobStore(url='sqlite:///scheduler_jobs.db')
-            }
+            timezone="Asia/Shanghai"
         )
         scheduler.start()
         
