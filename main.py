@@ -692,15 +692,7 @@ def init_main_scheduler():
         )
         scheduler.start()
         
-        print("✅ 主调度器已启动 (时区: Asia/Shanghai)")
-        
-        scheduler.add_job(
-            health_check,
-            trigger=IntervalTrigger(minutes=10, timezone="Asia/Shanghai"),
-            id="health_check_interval",
-            replace_existing=True
-        )
-        print("✅ 已添加健康检查定时任务：每10分钟执行一次")
+        print("✅ 主调度器已启动 (时区：Asia/Shanghai)")
 
 init_database()
 
