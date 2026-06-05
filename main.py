@@ -1,15 +1,13 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel
 from typing import Optional, Dict
-import sqlite3
 import jwt
 import datetime
 import os
-from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+import pymysql
 
-DATABASE_PATH = Path("./user_database.db")
 SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key_here_change_in_production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
@@ -17,21 +15,7 @@ ACCESS_TOKEN_EXPIRE_HOURS = 24
 DEFAULT_MYSQL_URL = "mysql://user_db:user_db_mm@127.0.0.1:3306/user_db"
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_MYSQL_URL)
 
-DB_TYPE = "sqlite"
-if DATABASE_URL:
-    if DATABASE_URL.startswith("postgresql"):
-        DB_TYPE = "postgresql"
-        try:
-            import psycopg2
-            from psycopg2.extras import RealDictCursor
-        except ImportError:
-            DB_TYPE = "sqlite"
-    elif DATABASE_URL.startswith("mysql"):
-        DB_TYPE = "mysql"
-        try:
-            import pymysql
-        except ImportError:
-            DB_TYPE = "sqlite"
+DB_TYPE = "mysql"
 
 app = FastAPI(title="用户认证与热点服务", description="提供用户注册、登录和热点资讯服务")
 
@@ -50,42 +34,27 @@ from wechat_robot import router as wechat_router
 app.include_router(wechat_router)
 
 def get_db_connection():
-    if DB_TYPE == "postgresql" and DATABASE_URL:
-        try:
-            return psycopg2.connect(DATABASE_URL, sslmode="require")
-        except Exception as e:
-            print(f"PostgreSQL连接失败，回退到SQLite: {e}")
-    elif DB_TYPE == "mysql" and DATABASE_URL:
-        try:
-            # 解析MySQL URL，格式: mysql://user:password@host:port/dbname
-            from urllib.parse import urlparse
-            url = urlparse(DATABASE_URL)
-            user = url.username
-            password = url.password
-            host = url.hostname
-            port = url.port or 3306
-            dbname = url.path[1:]  # 去掉开头的/
-            
-            return pymysql.connect(
-                host=host,
-                port=port,
-                user=user,
-                password=password,
-                database=dbname,
-                charset="utf8mb4"
-            )
-        except Exception as e:
-            print(f"MySQL连接失败，回退到SQLite: {e}")
+    # 解析 MySQL URL，格式：mysql://user:password@host:port/dbname
+    from urllib.parse import urlparse
+    url = urlparse(DATABASE_URL)
+    user = url.username
+    password = url.password
+    host = url.hostname
+    port = url.port or 3306
+    dbname = url.path[1:]  # 去掉开头的/
     
-    return sqlite3.connect(str(DATABASE_PATH))
+    return pymysql.connect(
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        database=dbname,
+        charset="utf8mb4"
+    )
 
 def init_database():
     conn = get_db_connection()
-    
-    if DB_TYPE in ["postgresql", "mysql"]:
-        cursor = conn.cursor()
-    else:
-        cursor = conn.cursor()
+    cursor = conn.cursor()
     
     create_table_sql = """
         CREATE TABLE IF NOT EXISTS users (

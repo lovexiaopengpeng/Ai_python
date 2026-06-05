@@ -3,37 +3,22 @@ from pydantic import BaseModel
 import re
 import requests
 import datetime
-import sqlite3
 import os
 import json
 import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
+import pymysql
 
 router = APIRouter()
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "user_database.db")
 WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=4ef6e7f3-b7d5-437f-940c-213fd6733be9"
 
 DEFAULT_MYSQL_URL = "mysql://user_db:user_db_mm@127.0.0.1:3306/user_db"
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_MYSQL_URL)
 
-DB_TYPE = "sqlite"
-if DATABASE_URL:
-    if DATABASE_URL.startswith("postgresql"):
-        DB_TYPE = "postgresql"
-        try:
-            import psycopg2
-            from psycopg2.extras import RealDictCursor
-        except ImportError:
-            DB_TYPE = "sqlite"
-    elif DATABASE_URL.startswith("mysql"):
-        DB_TYPE = "mysql"
-        try:
-            import pymysql
-        except ImportError:
-            DB_TYPE = "sqlite"
+DB_TYPE = "mysql"
 
 scheduler = None
 
@@ -52,40 +37,39 @@ class WeChatMessage(BaseModel):
     updated_at: str
 
 def get_db_connection():
-    if DB_TYPE == "postgresql" and DATABASE_URL:
-        try:
-            return psycopg2.connect(DATABASE_URL, sslmode="require")
-        except Exception as e:
-            print(f"PostgreSQL连接失败，回退到SQLite: {e}")
-    elif DB_TYPE == "mysql" and DATABASE_URL:
-        try:
-            # 解析MySQL URL，格式: mysql://user:password@host:port/dbname
-            from urllib.parse import urlparse
-            url = urlparse(DATABASE_URL)
-            user = url.username
-            password = url.password
-            host = url.hostname
-            port = url.port or 3306
-            dbname = url.path[1:]  # 去掉开头的/
-            
-            return pymysql.connect(
-                host=host,
-                port=port,
-                user=user,
-                password=password,
-                database=dbname,
-                charset="utf8mb4"
-            )
-        except Exception as e:
-            print(f"MySQL连接失败，回退到SQLite: {e}")
+    # 解析 MySQL URL，格式：mysql://user:password@host:port/dbname
+    from urllib.parse import urlparse
+    url = urlparse(DATABASE_URL)
+    user = url.username
+    password = url.password
+    host = url.hostname
+    port = url.port or 3306
+    dbname = url.path[1:]  # 去掉开头的/
     
-    return sqlite3.connect(DB_PATH)
+    return pymysql.connect(
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        database=dbname,
+        charset="utf8mb4"
+    )
 
-def db_execute(cursor, query, params=()):
-    if DB_TYPE in ["postgresql", "mysql"]:
-        cursor.execute(query, params)
+def db_execute(cursor, query, params=None):
+    """
+    执行数据库查询
+    
+    Args:
+        cursor: 数据库游标
+        query: SQL 查询语句，使用 %s 作为占位符
+        params: 参数元组或列表
+    """
+    if params is None:
+        cursor.execute(query)
     else:
-        query = query.replace("%s", "?")
+        # 确保 params 是元组或列表
+        if not isinstance(params, (tuple, list)):
+            params = (params,)
         cursor.execute(query, params)
 
 def send_wechat_message(content: str, msg_type: str = "text", payload: dict = None) -> dict:
@@ -196,7 +180,7 @@ def execute_scheduled_message(message_id: int):
     try:
         db_execute(
             cursor,
-            "SELECT id, is_daily, send_time, content, status FROM wechat_messages WHERE id = ?",
+            "SELECT id, is_daily, send_time, content, status FROM wechat_messages WHERE id = %s",
             (message_id,)
         )
         
@@ -219,14 +203,14 @@ def execute_scheduled_message(message_id: int):
         if result["success"]:
             db_execute(
                 cursor,
-                "UPDATE wechat_messages SET status = 'sent', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                "UPDATE wechat_messages SET status = 'sent', updated_at = CURRENT_TIMESTAMP WHERE id = %s",
                 (message_id,)
             )
             print(f"消息 {message_id} 发送成功")
         else:
             db_execute(
                 cursor,
-                "UPDATE wechat_messages SET status = 'failed', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                "UPDATE wechat_messages SET status = 'failed', updated_at = CURRENT_TIMESTAMP WHERE id = %s",
                 (message_id,)
             )
             print(f"消息 {message_id} 发送失败: {result['error']}")
@@ -417,7 +401,7 @@ def send_message(request: WeChatMessageRequest):
         try:
             db_execute(
                 cursor,
-                "INSERT INTO wechat_messages (is_daily, send_time, content, status) VALUES (?, ?, ?, 'scheduled')",
+                "INSERT INTO wechat_messages (is_daily, send_time, content, status) VALUES (%s, %s, %s, 'scheduled')",
                 (1 if request.is_daily else 0, request.send_time, request.content)
             )
             
@@ -531,7 +515,7 @@ def get_messages(status: str = None):
         if status:
             db_execute(
                 cursor,
-                "SELECT id, is_daily, send_time, content, status, created_at, updated_at FROM wechat_messages WHERE status = ? ORDER BY created_at DESC",
+                "SELECT id, is_daily, send_time, content, status, created_at, updated_at FROM wechat_messages WHERE status = %s ORDER BY created_at DESC",
                 (status,)
             )
         else:
@@ -589,7 +573,7 @@ def get_message(message_id: int):
     try:
         db_execute(
             cursor,
-            "SELECT id, is_daily, send_time, content, status, created_at, updated_at FROM wechat_messages WHERE id = ?",
+            "SELECT id, is_daily, send_time, content, status, created_at, updated_at FROM wechat_messages WHERE id = %s",
             (message_id,)
         )
         
@@ -649,7 +633,7 @@ def cancel_message(message_id: int):
     try:
         db_execute(
             cursor,
-            "SELECT id, is_daily, status FROM wechat_messages WHERE id = ?",
+            "SELECT id, is_daily, status FROM wechat_messages WHERE id = %s",
             (message_id,)
         )
         
@@ -679,7 +663,7 @@ def cancel_message(message_id: int):
         
         db_execute(
             cursor,
-            "UPDATE wechat_messages SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            "UPDATE wechat_messages SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = %s",
             (message_id,)
         )
         
@@ -787,7 +771,7 @@ def init_weather_database():
         if count == 0:
             cursor.execute("""
                 INSERT INTO weather_config (city, district, send_time, enabled)
-                VALUES (?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s)
             """, ('长沙', '岳麓区', '13:50', 1))
         
         conn.commit()
@@ -841,7 +825,7 @@ def update_weather_config(city: str, district: str, send_time: str, enabled: boo
     try:
         cursor.execute("""
             UPDATE weather_config 
-            SET city = ?, district = ?, send_time = ?, enabled = ?, updated_at = CURRENT_TIMESTAMP
+            SET city = %s, district = %s, send_time = %s, enabled = %s, updated_at = CURRENT_TIMESTAMP
             WHERE id = 1
         """, (city, district, send_time, 1 if enabled else 0))
         
@@ -1149,6 +1133,147 @@ class WeatherQueryRequest(BaseModel):
     city: str = "长沙"
     district: str = "岳麓区"
 
+def get_weather_schedule_from_db(job_id: str = None):
+    """
+    从数据库获取天气调度配置
+    """
+    conn = get_db_connection()
+    if not conn:
+        return None
+    
+    try:
+        cursor = conn.cursor()
+        if job_id:
+            cursor.execute("SELECT * FROM weather_schedule_config WHERE job_id = ?", (job_id,))
+            row = cursor.fetchone()
+            if row:
+                return {
+                    'id': row[0],
+                    'job_id': row[1],
+                    'send_time': row[2],
+                    'is_daily': bool(row[3]),
+                    'status': row[4],
+                    'location': row[5],
+                    'created_at': row[6],
+                    'updated_at': row[7]
+                }
+            return None
+        else:
+            cursor.execute("SELECT * FROM weather_schedule_config WHERE status = 'active'")
+            rows = cursor.fetchall()
+            return [{
+                'id': row[0],
+                'job_id': row[1],
+                'send_time': row[2],
+                'is_daily': bool(row[3]),
+                'status': row[4],
+                'location': row[5],
+                'created_at': row[6],
+                'updated_at': row[7]
+            } for row in rows]
+    finally:
+        conn.close()
+
+def save_weather_schedule_to_db(job_id: str, send_time: str, is_daily: bool, location: str = "长沙市岳麓区"):
+    """
+    保存天气调度配置到数据库
+    """
+    conn = get_db_connection()
+    if not conn:
+        return False
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO weather_schedule_config (job_id, send_time, is_daily, location)
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE 
+                send_time = VALUES(send_time),
+                is_daily = VALUES(is_daily),
+                location = VALUES(location),
+                updated_at = CURRENT_TIMESTAMP
+        """, (job_id, send_time, is_daily, location))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"保存天气调度配置失败：{e}")
+        return False
+    finally:
+        conn.close()
+
+def delete_weather_schedule_from_db(job_id: str):
+    """
+    从数据库删除天气调度配置
+    """
+    conn = get_db_connection()
+    if not conn:
+        return False
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM weather_schedule_config WHERE job_id = ?", (job_id,))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"删除天气调度配置失败：{e}")
+        return False
+    finally:
+        conn.close()
+
+def restore_weather_schedule_from_db():
+    """
+    从数据库恢复天气调度任务
+    """
+    global scheduler
+    
+    if scheduler is None:
+        init_scheduler()
+    
+    configs = get_weather_schedule_from_db()
+    if not configs:
+        print("✅ 没有需要恢复的天气播报任务")
+        return
+    
+    restored_count = 0
+    for config in configs:
+        try:
+            send_time = config['send_time']
+            is_daily = config['is_daily']
+            job_id = config['job_id']
+            
+            hour, minute = map(int, send_time.split(":"))
+            
+            if is_daily:
+                trigger = CronTrigger(hour=hour, minute=minute, timezone="Asia/Shanghai")
+                scheduler.add_job(
+                    execute_weather_report,
+                    trigger=trigger,
+                    id=job_id,
+                    replace_existing=True
+                )
+                print(f"✅ 已恢复每日天气播报任务：{job_id} (时间：{send_time})")
+            else:
+                now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
+                target_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                
+                if target_time <= now:
+                    target_time += datetime.timedelta(days=1)
+                
+                trigger = DateTrigger(run_date=target_time, timezone="Asia/Shanghai")
+                scheduler.add_job(
+                    execute_weather_report,
+                    trigger=trigger,
+                    id=job_id,
+                    replace_existing=True
+                )
+                print(f"✅ 已恢复单次天气播报任务：{job_id} (时间：{target_time})")
+            
+            restored_count += 1
+        except Exception as e:
+            print(f"恢复天气播报任务 {job_id} 失败：{e}")
+    
+    print(f"✅ 共恢复 {restored_count} 个天气播报任务")
+
 def schedule_weather_task(send_time: str, is_daily: bool):
     """
     安排天气播报任务
@@ -1190,7 +1315,11 @@ def schedule_weather_task(send_time: str, is_daily: bool):
                 id=job_id,
                 replace_existing=True
             )
-            print(f"✅ 已添加单次天气播报任务: 时间 {target_time}")
+            print(f"✅ 已添加单次天气播报任务：时间 {target_time}")
+        
+        # 保存到数据库
+        save_weather_schedule_to_db(job_id, send_time, is_daily)
+        print(f"✅ 天气播报任务已保存到数据库：{job_id}")
         
         return True, job_id
         
@@ -1507,7 +1636,10 @@ def cancel_weather_job(job_id: str):
         
         scheduler.remove_job(job_id)
         
-        print(f"✅ 已取消任务: {job_id}")
+        # 从数据库删除
+        delete_weather_schedule_from_db(job_id)
+        
+        print(f"✅ 已取消任务：{job_id}")
         
         return {
             "success": True,
@@ -1522,3 +1654,4 @@ def cancel_weather_job(job_id: str):
 
 init_weather_database()
 init_weather_scheduler()
+restore_weather_schedule_from_db()

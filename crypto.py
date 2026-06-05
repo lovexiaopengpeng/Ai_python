@@ -2,11 +2,11 @@ from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 import requests
 import datetime
-import sqlite3
 import os
 import json
 import asyncio
 from bs4 import BeautifulSoup
+import pymysql
 
 try:
     from playwright.async_api import async_playwright
@@ -23,58 +23,42 @@ except ImportError:
 DEFAULT_MYSQL_URL = "mysql://user_db:user_db_mm@127.0.0.1:3306/user_db"
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_MYSQL_URL)
 
-DB_TYPE = "sqlite"
-if DATABASE_URL:
-    if DATABASE_URL.startswith("postgresql"):
-        DB_TYPE = "postgresql"
-        try:
-            import psycopg2
-            from psycopg2.extras import RealDictCursor
-        except ImportError:
-            DB_TYPE = "sqlite"
-    elif DATABASE_URL.startswith("mysql"):
-        DB_TYPE = "mysql"
-        try:
-            import pymysql
-        except ImportError:
-            DB_TYPE = "sqlite"
+DB_TYPE = "mysql"
 
 def get_db_connection():
-    db_path = os.path.join(os.path.dirname(__file__), "user_database.db")
-    if DB_TYPE == "postgresql" and DATABASE_URL:
-        try:
-            return psycopg2.connect(DATABASE_URL, sslmode="require")
-        except Exception as e:
-            print(f"PostgreSQL连接失败，回退到SQLite: {e}")
-    elif DB_TYPE == "mysql" and DATABASE_URL:
-        try:
-            # 解析MySQL URL，格式: mysql://user:password@host:port/dbname
-            from urllib.parse import urlparse
-            url = urlparse(DATABASE_URL)
-            user = url.username
-            password = url.password
-            host = url.hostname
-            port = url.port or 3306
-            dbname = url.path[1:]  # 去掉开头的/
-            
-            return pymysql.connect(
-                host=host,
-                port=port,
-                user=user,
-                password=password,
-                database=dbname,
-                charset="utf8mb4"
-            )
-        except Exception as e:
-            print(f"MySQL连接失败，回退到SQLite: {e}")
+    # 解析 MySQL URL，格式：mysql://user:password@host:port/dbname
+    from urllib.parse import urlparse
+    url = urlparse(DATABASE_URL)
+    user = url.username
+    password = url.password
+    host = url.hostname
+    port = url.port or 3306
+    dbname = url.path[1:]  # 去掉开头的/
     
-    return sqlite3.connect(db_path)
+    return pymysql.connect(
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        database=dbname,
+        charset="utf8mb4"
+    )
 
-def db_execute(cursor, query, params=()):
-    if DB_TYPE in ["postgresql", "mysql"]:
-        cursor.execute(query, params)
+def db_execute(cursor, query, params=None):
+    """
+    执行数据库查询
+    
+    Args:
+        cursor: 数据库游标
+        query: SQL 查询语句，使用 %s 作为占位符
+        params: 参数元组或列表
+    """
+    if params is None:
+        cursor.execute(query)
     else:
-        query = query.replace("%s", "?")
+        # 确保 params 是元组或列表
+        if not isinstance(params, (tuple, list)):
+            params = (params,)
         cursor.execute(query, params)
 
 STATE_FILE = os.path.join(os.path.dirname(__file__), "meituan_state.json")
