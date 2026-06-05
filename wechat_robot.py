@@ -839,22 +839,36 @@ def update_weather_config(city: str, district: str, send_time: str, enabled: boo
     finally:
         conn.close()
 
-def execute_weather_report():
+def execute_weather_report(job_id: str = None):
     """
     执行天气播报任务
+    
+    Args:
+        job_id: 任务 ID，如果为 None 则使用默认配置
     """
-    print(f"[DEBUG] 开始执行天气播报任务...")
+    print(f"[DEBUG] 开始执行天气播报任务... (job_id: {job_id})")
     
     try:
-        config = get_weather_config()
-        print(f"[DEBUG] 天气配置: {config}")
-        
-        if not config or not config.get("enabled"):
-            print("[DEBUG] 天气播报功能未启用，跳过")
-            return
-        
-        location = f"{config.get('city', '长沙')}{config.get('district', '岳麓区')}"
-        print(f"[DEBUG] 获取 {location} 的天气信息...")
+        # 如果指定了 job_id，从 weather_schedule_config 读取配置
+        if job_id:
+            config = get_weather_schedule_from_db(job_id)
+            if config:
+                location = config.get('location', '长沙市岳麓区')
+                print(f"[DEBUG] 从 weather_schedule_config 读取配置：{location}")
+            else:
+                print(f"[DEBUG] 未找到任务配置 {job_id}，使用默认配置")
+                location = "长沙市岳麓区"
+        else:
+            # 否则使用旧的 weather_config 表配置（向后兼容）
+            config = get_weather_config()
+            print(f"[DEBUG] 天气配置：{config}")
+            
+            if not config or not config.get("enabled"):
+                print("[DEBUG] 天气播报功能未启用，跳过")
+                return
+            
+            location = f"{config.get('city', '长沙')}{config.get('district', '岳麓区')}"
+            print(f"[DEBUG] 获取 {location} 的天气信息...")
         
         weather_info = crawl_weather_from_website(location)
         
@@ -1207,15 +1221,19 @@ def delete_weather_schedule_from_db(job_id: str):
     """
     conn = get_db_connection()
     if not conn:
+        print(f"❌ 删除失败：无法连接数据库")
         return False
     
     try:
         cursor = conn.cursor()
+        print(f"[DEBUG] 准备删除任务：{job_id}")
         cursor.execute("DELETE FROM weather_schedule_config WHERE job_id = %s", (job_id,))
         conn.commit()
+        affected_rows = cursor.rowcount
+        print(f"[DEBUG] 删除任务 {job_id}，影响行数：{affected_rows}")
         return True
     except Exception as e:
-        print(f"删除天气调度配置失败：{e}")
+        print(f"❌ 删除天气调度配置失败：{e}")
         return False
     finally:
         conn.close()
@@ -1249,7 +1267,8 @@ def restore_weather_schedule_from_db():
                     execute_weather_report,
                     trigger=trigger,
                     id=job_id,
-                    replace_existing=True
+                    replace_existing=True,
+                    kwargs={'job_id': job_id}
                 )
                 print(f"✅ 已恢复每日天气播报任务：{job_id} (时间：{send_time})")
             else:
@@ -1264,7 +1283,8 @@ def restore_weather_schedule_from_db():
                     execute_weather_report,
                     trigger=trigger,
                     id=job_id,
-                    replace_existing=True
+                    replace_existing=True,
+                    kwargs={'job_id': job_id}
                 )
                 print(f"✅ 已恢复单次天气播报任务：{job_id} (时间：{target_time})")
             
@@ -1297,9 +1317,10 @@ def schedule_weather_task(send_time: str, is_daily: bool):
                 execute_weather_report,
                 trigger=trigger,
                 id=job_id,
-                replace_existing=True
+                replace_existing=True,
+                kwargs={'job_id': job_id}
             )
-            print(f"✅ 已添加每日天气播报任务: 时间 {send_time}")
+            print(f"✅ 已添加每日天气播报任务：时间 {send_time}")
         else:
             now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
             target_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
@@ -1313,7 +1334,8 @@ def schedule_weather_task(send_time: str, is_daily: bool):
                 execute_weather_report,
                 trigger=trigger,
                 id=job_id,
-                replace_existing=True
+                replace_existing=True,
+                kwargs={'job_id': job_id}
             )
             print(f"✅ 已添加单次天气播报任务：时间 {target_time}")
         
@@ -1589,19 +1611,19 @@ def cancel_all_weather_jobs():
                     except Exception as e:
                         print(f"❌ 取消任务失败 {job.id}: {e}")
             
-            try:
-                scheduler.remove_job("weather_report_daily")
-            except:
-                pass
-        
-        update_weather_config("长沙", "岳麓区", "13:50", False)
+        # 删除 weather_schedule_config 表中的所有记录
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM weather_schedule_config")
+        conn.commit()
+        conn.close()
+        print("✅ 已删除 weather_schedule_config 表中的所有记录")
         
         return {
             "success": True,
             "message": "已取消所有天气播报定时任务",
             "removed_count": len(removed_jobs),
-            "removed_jobs": removed_jobs,
-            "weather_config_enabled": False
+            "removed_jobs": removed_jobs
         }
     except Exception as e:
         return {
@@ -1627,16 +1649,18 @@ def cancel_weather_job(job_id: str):
                 "error": "调度器未初始化"
             }
         
-        job = scheduler.get_job(job_id)
-        if job is None:
-            return {
-                "success": False,
-                "error": f"任务不存在: {job_id}"
-            }
+        # 尝试从调度器删除任务
+        try:
+            job = scheduler.get_job(job_id)
+            if job:
+                scheduler.remove_job(job_id)
+                print(f"[DEBUG] 已从调度器删除任务：{job_id}")
+            else:
+                print(f"[DEBUG] 调度器中未找到任务：{job_id}，但仍会删除数据库记录")
+        except Exception as e:
+            print(f"[DEBUG] 从调度器删除任务失败：{e}")
         
-        scheduler.remove_job(job_id)
-        
-        # 从数据库删除
+        # 从数据库删除（无论如何都执行）
         delete_weather_schedule_from_db(job_id)
         
         print(f"✅ 已取消任务：{job_id}")
