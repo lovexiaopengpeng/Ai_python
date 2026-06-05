@@ -1676,6 +1676,241 @@ def cancel_weather_job(job_id: str):
             "error": str(e)
         }
 
+# ============ 周报提醒功能 ============
+
+def send_weekly_report_reminder():
+    """
+    发送周报提醒消息
+    """
+    try:
+        content = "记得要写周报哦"
+        
+        print(f"[DEBUG] 开始发送周报提醒消息：{content}")
+        
+        result = send_wechat_message(content)
+        
+        if result.get("success"):
+            print(f"✅ 周报提醒消息发送成功")
+        else:
+            print(f"❌ 周报提醒消息发送失败：{result.get('error')}")
+            
+        return result
+        
+    except Exception as e:
+        print(f"❌ 发送周报提醒消息时发生错误：{e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+def init_weekly_report_scheduler():
+    """
+    初始化周报提醒定时任务
+    """
+    global scheduler
+    
+    if scheduler is None:
+        init_scheduler()
+    
+    try:
+        # 检查是否已存在周报提醒任务
+        existing_job = scheduler.get_job("weekly_report_reminder")
+        if existing_job:
+            print("周报提醒任务已存在，跳过初始化")
+            return
+        
+        # 添加每周一 09:00 的定时任务
+        trigger = CronTrigger(day_of_week="mon", hour=9, minute=0, timezone="Asia/Shanghai")
+        scheduler.add_job(
+            send_weekly_report_reminder,
+            trigger=trigger,
+            id="weekly_report_reminder",
+            replace_existing=True
+        )
+        
+        print("✅ 已添加周报提醒任务：每周一 09:00")
+        
+    except Exception as e:
+        print(f"初始化周报提醒定时任务时发生错误：{e}")
+
+@router.post("/weekly-report/schedule", summary="安排周报提醒定时任务")
+def schedule_weekly_report():
+    """
+    安排周报提醒定时任务
+    
+    在每周一 09:00 发送"记得要写周报哦"到企业微信群聊
+    
+    Returns:
+        dict: 安排结果
+    """
+    try:
+        global scheduler
+        
+        if scheduler is None:
+            init_scheduler()
+        
+        # 检查是否已存在
+        existing_job = scheduler.get_job("weekly_report_reminder")
+        if existing_job:
+            return {
+                "success": True,
+                "message": "周报提醒任务已存在",
+                "data": {
+                    "job_id": "weekly_report_reminder",
+                    "schedule": "每周一 09:00",
+                    "content": "记得要写周报哦"
+                }
+            }
+        
+        # 添加定时任务
+        trigger = CronTrigger(day_of_week="mon", hour=9, minute=0, timezone="Asia/Shanghai")
+        scheduler.add_job(
+            send_weekly_report_reminder,
+            trigger=trigger,
+            id="weekly_report_reminder",
+            replace_existing=True
+        )
+        
+        print("✅ 已添加周报提醒任务：每周一 09:00")
+        
+        return {
+            "success": True,
+            "message": "周报提醒任务已安排",
+            "data": {
+                "job_id": "weekly_report_reminder",
+                "schedule": "每周一 09:00",
+                "content": "记得要写周报哦"
+            }
+        }
+        
+    except Exception as e:
+        print(f"安排周报提醒任务时发生错误：{e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@router.post("/weekly-report/cancel", summary="取消周报提醒定时任务")
+def cancel_weekly_report():
+    """
+    取消周报提醒定时任务
+    
+    Returns:
+        dict: 取消结果
+    """
+    try:
+        global scheduler
+        
+        if scheduler is None:
+            return {
+                "success": False,
+                "error": "调度器未初始化"
+            }
+        
+        # 尝试从调度器删除任务
+        try:
+            job = scheduler.get_job("weekly_report_reminder")
+            if job:
+                scheduler.remove_job("weekly_report_reminder")
+                print(f"✅ 已取消周报提醒任务")
+            else:
+                print(f"⚠️ 周报提醒任务不存在")
+        except Exception as e:
+            print(f"从调度器删除任务失败：{e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+        
+        return {
+            "success": True,
+            "message": "周报提醒任务已取消"
+        }
+        
+    except Exception as e:
+        print(f"取消周报提醒任务时发生错误：{e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@router.get("/weekly-report/status", summary="查询周报提醒任务状态")
+def get_weekly_report_status():
+    """
+    查询周报提醒任务状态
+    
+    Returns:
+        dict: 任务状态
+    """
+    try:
+        global scheduler
+        
+        if scheduler is None:
+            return {
+                "success": False,
+                "error": "调度器未初始化"
+            }
+        
+        job = scheduler.get_job("weekly_report_reminder")
+        
+        if job:
+            return {
+                "success": True,
+                "data": {
+                    "enabled": True,
+                    "job_id": "weekly_report_reminder",
+                    "schedule": "每周一 09:00",
+                    "content": "记得要写周报哦",
+                    "next_run_time": str(job.next_run_time) if job.next_run_time else None
+                }
+            }
+        else:
+            return {
+                "success": True,
+                "data": {
+                    "enabled": False,
+                    "message": "周报提醒任务未安排"
+                }
+            }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@router.post("/weekly-report/test", summary="测试周报提醒功能")
+def test_weekly_report():
+    """
+    立即测试周报提醒功能
+    
+    Returns:
+        dict: 测试结果
+    """
+    try:
+        result = send_weekly_report_reminder()
+        
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": "测试消息已发送"
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.get("error", "发送失败")
+            }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+# 初始化周报提醒定时任务
+init_weekly_report_scheduler()
+
+# 原有的初始化代码
 init_weather_database()
 init_weather_scheduler()
 restore_weather_schedule_from_db()
