@@ -1144,7 +1144,7 @@ def get_weather_schedule_from_db(job_id: str = None):
     try:
         cursor = conn.cursor()
         if job_id:
-            cursor.execute("SELECT * FROM weather_schedule_config WHERE job_id = ?", (job_id,))
+            cursor.execute("SELECT * FROM weather_schedule_config WHERE job_id = %s", (job_id,))
             row = cursor.fetchone()
             if row:
                 return {
@@ -1186,7 +1186,7 @@ def save_weather_schedule_to_db(job_id: str, send_time: str, is_daily: bool, loc
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO weather_schedule_config (job_id, send_time, is_daily, location)
-            VALUES (?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE 
                 send_time = VALUES(send_time),
                 is_daily = VALUES(is_daily),
@@ -1211,7 +1211,7 @@ def delete_weather_schedule_from_db(job_id: str):
     
     try:
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM weather_schedule_config WHERE job_id = ?", (job_id,))
+        cursor.execute("DELETE FROM weather_schedule_config WHERE job_id = %s", (job_id,))
         conn.commit()
         return True
     except Exception as e:
