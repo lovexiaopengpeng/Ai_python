@@ -1676,6 +1676,62 @@ def cancel_weather_job(job_id: str):
             "error": str(e)
         }
 
+# ============ 即时消息推送功能 ============
+
+class InstantMessageRequest(BaseModel):
+    """
+    即时消息请求
+    """
+    content: str
+    msg_type: str = "text"
+
+@router.post("/message/send", summary="立即发送消息到群聊")
+def send_instant_message(request: InstantMessageRequest):
+    """
+    立即发送一条消息推送到企业微信群聊
+    
+    Args:
+        request: 消息请求
+            - content: 消息内容
+            - msg_type: 消息类型（text/markdown，默认 text）
+    
+    Returns:
+        dict: 发送结果
+    
+    示例:
+    ```json
+    {
+        "content": "你好，这是一条测试消息",
+        "msg_type": "text"
+    }
+    ```
+    """
+    try:
+        if not request.content or not request.content.strip():
+            return {
+                "success": False,
+                "error": "消息内容不能为空"
+            }
+        
+        result = send_wechat_message(
+            content=request.content.strip(),
+            msg_type=request.msg_type or "text"
+        )
+        
+        if result.get("success"):
+            print(f"✅ 即时消息发送成功：{request.content[:50]}...")
+        else:
+            print(f"❌ 即时消息发送失败：{result.get('error')}")
+        
+        return result
+        
+    except Exception as e:
+        print(f"❌ 发送即时消息时发生错误：{e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 # ============ 周报提醒功能 ============
 
 def send_weekly_report_reminder():
