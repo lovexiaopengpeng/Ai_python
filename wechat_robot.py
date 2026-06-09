@@ -1,3 +1,5 @@
+import array
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import re
@@ -10,6 +12,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 import pymysql
+from requests.api import request
 
 router = APIRouter()
 
@@ -71,6 +74,37 @@ def db_execute(cursor, query, params=None):
         if not isinstance(params, (tuple, list)):
             params = (params,)
         cursor.execute(query, params)
+
+@router.post("/user/{userId}")
+def get_user_info(userId:str):
+    userDic = {}
+    array = []
+    array.append(userDic)
+    f = open('user.json', 'w')
+    read_dada = f.read()
+    f.close()
+    
+    with open('user.json', 'w') as f2:
+        read_dada2 = f2.read()
+        pos = f2.tell()
+
+    
+    userDic = {"userid":userId,"username":"张三"}
+
+    response = requests.post(WEBHOOK_URL, json=userDic)
+    try:
+        print(response.json())
+        print(response.status_code)
+        userDic["response"] = response.json()
+        userDic["success"] = True
+        return userDic
+    except Exception as e:
+        print(e)
+        userDic["error"] = str(e)
+        userDic["success"] = False
+        return userDic
+    
+
 
 def send_wechat_message(content: str, msg_type: str = "text", payload: dict = None) -> dict:
     """

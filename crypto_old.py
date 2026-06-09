@@ -53,7 +53,7 @@ def load_saved_state():
             return None
     return None
 
-router = APIRouter(prefix="/crypto", tags=["虚拟币大额交易"])
+router = APIRouter(prefix="/crypto_old", tags=["虚拟币大额交易"])
 
 def fetch_from_binance_api():
     url = "https://api.binance.com/api/v3/ticker/24hr"

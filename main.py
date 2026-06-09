@@ -33,6 +33,9 @@ app.include_router(crypto_router)
 from wechat_robot import router as wechat_router
 app.include_router(wechat_router)
 
+from crypto_old import router as crypto_old_router
+app.include_router(crypto_old_router)
+
 def get_db_connection():
     # 解析 MySQL URL，格式：mysql://user:password@host:port/dbname
     from urllib.parse import urlparse
