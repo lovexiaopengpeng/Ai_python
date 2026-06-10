@@ -135,8 +135,92 @@ def get_user_info(user_info: UserInfo) -> dict:
         }
     
     return userDic
-    
 
+class UserInfoByPhone(BaseModel):
+    phone: str
+
+@router.post("/user_info_by_phone", summary="查询用户信息（根据手机号）")
+def get_user_info_by_phone(user_info:UserInfoByPhone):
+    """
+    根据手机号 查询用户信息
+    
+    Args:
+        user_info: 手机号 请求体
+    
+    Returns:
+        dict: 用户信息
+    """
+    userDic = {}
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        db_execute(cursor, "SELECT * FROM users WHERE phone = %s", (user_info.phone,))
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        if result:
+            columns = [desc[0] for desc in cursor.description]
+            userDic = dict(zip(columns, result))
+            userDic["success"] = True
+            print(f"[DEBUG] 查询到用户数据：{userDic}")
+        else:
+            userDic = {
+                "phone": user_info.phone,
+                "user_id": None,
+                "username": None,
+                "success": False,
+                "error": "用户不存在"
+            }
+            print(f"[DEBUG] 用户不存在：{user_info.phone}")
+    except Exception as e:
+        print(f"[ERROR] 查询数据库失败：{e}")
+        userDic = {
+            "phone": user_info.phone,
+            "user_id": None,
+            "username": None,
+            "success": False,
+            "error": str(e)
+        }
+        return userDic
+class UpdateUserName(BaseModel):
+    userid: str
+    username: str
+
+@router.post("/update_user_name", summary="更新用户姓名")
+def update_user_name(user_info: UpdateUserName):
+    """
+    更新用户姓名
+    
+    Args:
+        user_info: 用户 ID 请求体
+    
+    Returns:
+        dict: 更新结果
+    """
+    userDic = {}
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        db_execute(cursor, "UPDATE users SET username = %s WHERE user_id = %s", (user_info.username, user_info.userid))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        userDic["success"] = True
+        print(f"[DEBUG] 更新用户姓名成功：{user_info.userid}")
+        # 返回最新的用户信息
+        userDic = get_user_info(UserInfo(userid=user_info.userid))
+        userDic["success"] = True
+        print(f"[DEBUG] 更新用户姓名成功：{user_info.userid}")
+    except Exception as e:
+        print(f"[ERROR] 更新用户姓名失败：{e}")
+        userDic = {
+            "userid": user_info.userid,
+            "success": False,
+            "error": str(e)
+        }
+        print(f"[DEBUG] 更新用户姓名失败：{user_info.userid}")
+        
+    return userDic
 
 def send_wechat_message(content: str, msg_type: str = "text", payload: dict = None) -> dict:
     """
