@@ -2,7 +2,6 @@
 Coze API 调用模块
 """
 import requests
-import json
 import time
 
 
@@ -466,58 +465,3 @@ def get_coze_file_info(file_id: str) -> dict:
     bot = CozeBot()
     return bot.get_file_info(file_id)
 
-
-# 测试代码
-if __name__ == "__main__":
-    # 测试调用
-    bot = CozeBot()
-    
-    print("=" * 50)
-    print("测试 Coze API 调用 - 获取实际回复")
-    print("=" * 50)
-    
-    # 测试 1: 简单对话并获取回复
-    print("\n测试 1: 询问'你是谁'并获取回复")
-    reply = bot.get_chat_response("你是谁？")
-    print(f"机器人回复：{reply}")
-    
-    # 测试 2: 获取完整响应
-    print("\n测试 2: 获取完整响应数据")
-    full_response = bot.chat_with_response("你好，介绍一下你自己")
-    print(f"完整响应：{json.dumps(full_response, ensure_ascii=False, indent=2)}")
-    
-    # 测试 3: 使用便捷函数（不等待）
-    print("\n测试 3: 使用便捷函数（不等待回复）")
-    answer = ask_coze("今天天气怎么样？")
-    print(f"回答：{answer}")
-    
-    # 测试 4: 文件上传
-    print("\n" + "=" * 50)
-    print("测试文件上传功能")
-    print("=" * 50)
-    
-    test_file_path = "/Users/zlhh/Desktop/AI+APP/后台/test_upload.txt"
-    print(f"\n测试 4: 上传文件 {test_file_path}")
-    file_id = bot.upload_and_get_id(test_file_path)
-    if file_id:
-        print(f"✅ 文件上传成功，file_id: {file_id}")
-        
-        # 测试 5: 获取文件详情
-        print(f"\n测试 5: 获取文件详情 (file_id: {file_id})")
-        file_info = bot.get_file_info(file_id)
-        print(f"文件详情：{json.dumps(file_info, ensure_ascii=False, indent=2)}")
-    else:
-        print("❌ 文件上传失败")
-    
-    # 测试 6: 使用便捷函数上传文件
-    print(f"\n测试 6: 使用便捷函数上传文件")
-    file_id_2 = upload_file_to_coze(test_file_path)
-    if file_id_2:
-        print(f"✅ 便捷函数上传成功，file_id: {file_id_2}")
-        
-        # 测试 7: 使用便捷函数获取文件详情
-        print(f"\n测试 7: 使用便捷函数获取文件详情")
-        info = get_coze_file_info(file_id_2)
-        print(f"文件信息：{json.dumps(info, ensure_ascii=False, indent=2)}")
-    else:
-        print("❌ 便捷函数上传失败")
