@@ -4,7 +4,7 @@
 
 - **服务地址**: `http://111.230.110.33`
 - **本地地址**: `http://localhost:8000`
-- **文档版本**: v1.3
+- **文档版本**: v1.4
 - **更新时间**: 2026-06-05
 
 ---
@@ -18,7 +18,8 @@
 5. [美团美食接口](#美团美食接口)
 6. [企业微信机器人接口](#企业微信机器人接口)
 7. [天气播报接口](#天气播报接口)
-8. [响应状态码](#响应状态码)
+8. [用户管理接口](#用户管理接口)
+9. [响应状态码](#响应状态码)
 
 ---
 
@@ -259,7 +260,73 @@ curl -X POST http://111.230.110.33/user_info \
 
 ---
 
-### 7. 验证Token
+### 8. 获取所有用户信息
+
+**接口地址**: `POST /all_users`
+
+**功能描述**: 获取数据库中所有用户的完整信息（需要管理员权限）
+
+**请求体**: 无
+
+**请求参数**: 无
+
+**成功响应**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "user_id": "001",
+      "username": "张三",
+      "email": "zhangsan@example.com",
+      "phone": "13800138000",
+      "created_at": "2024-01-01 12:00:00",
+      "last_login": "2026-06-05 10:30:00"
+    },
+    {
+      "user_id": "002",
+      "username": "李四",
+      "email": "lisi@example.com",
+      "phone": "13900139000",
+      "created_at": "2024-01-02 14:20:00",
+      "last_login": "2026-06-05 11:45:00"
+    }
+  ],
+  "error": ""
+}
+```
+
+**查询失败响应**:
+```json
+{
+  "success": false,
+  "data": [],
+  "error": "(2003, \"Can't connect to MySQL server on 'localhost' ([Errno 61] Connection refused)\""
+}
+```
+
+**使用示例**:
+```bash
+# 获取所有用户信息
+curl -X POST http://111.230.110.33/all_users
+```
+
+**响应字段说明**:
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| success | boolean | 查询是否成功 |
+| data | array | 用户信息数组 |
+| data[].user_id | string | 用户 ID |
+| data[].username | string | 用户名 |
+| data[].email | string | 邮箱地址 |
+| data[].phone | string | 手机号 |
+| data[].created_at | string | 创建时间 |
+| data[].last_login | string | 最后登录时间 |
+| error | string | 错误信息（成功时为空字符串） |
+
+---
+
+### 9. 验证 Token
 
 **接口地址**: `POST /verify-token`
 
