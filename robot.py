@@ -301,6 +301,103 @@ class CozeBot:
         else:
             return final_result
     
+    def chat_with_file(self, content: str, file_id: str, user_id: str = None) -> dict:
+        """
+        带文件的对话（使用上传的文件）
+        
+        Args:
+            content: 用户输入的问题或内容
+            file_id: 文件 ID（已上传的文件）
+            user_id: 用户 ID（可选）
+        
+        Returns:
+            dict: 包含完整回复的字典
+        
+        使用说明:
+            - 文件需要先通过 upload_file 方法上传获取 file_id
+            - 在消息中通过 file_id 引用已上传的文件
+            - 适用于图片分析、文档处理等场景
+        """
+        url = f"{self.base_url}/chat"
+        
+        # 构建请求体（包含文件引用）
+        payload = {
+            "bot_id": self.bot_id,
+            "user_id": user_id or self.user_id,
+            "stream": False,
+            "additional_messages": [
+                {
+                    "content_type": "text",
+                    "role": "user",
+                    "type": "question",
+                    "content": content,
+                    "file_ids": [file_id]  # 附加文件
+                }
+            ],
+            "parameters": {}
+        }
+        
+        try:
+            # 发送 POST 请求
+            response = requests.post(url, headers=self.headers, json=payload)
+            response.raise_for_status()
+            
+            # 解析响应
+            result = response.json()
+            print(f"[DEBUG] 带文件对话 API 响应：{result}")
+            
+            if result.get("code") != 0 or not result.get("data"):
+                return result
+            
+            # 获取会话 ID 和聊天 ID
+            data = result.get("data", {})
+            conversation_id = data.get("conversation_id")
+            chat_id = data.get("id")
+            
+            print(f"[DEBUG] 会话 ID: {conversation_id}, 聊天 ID: {chat_id}")
+            
+            # 等待并获取回复
+            print(f"[DEBUG] 等待机器人回复...")
+            final_result = self.wait_for_completion(conversation_id, chat_id)
+            
+            if final_result.get("code") == 0 and final_result.get("data"):
+                reply_content = final_result["data"].get("content", "")
+                if reply_content:
+                    print(f"[DEBUG] 获取到回复：{reply_content}")
+                    return {
+                        "code": 0,
+                        "msg": "success",
+                        "data": {
+                            "content": reply_content,
+                            "conversation_id": conversation_id,
+                            "chat_id": chat_id,
+                            "file_id": file_id
+                        }
+                    }
+                else:
+                    return {
+                        "code": -1,
+                        "msg": "未获取到回复内容",
+                        "data": None
+                    }
+            else:
+                return final_result
+                
+        except requests.exceptions.RequestException as e:
+            print(f"[ERROR] 带文件对话调用失败：{e}")
+            return {
+                "code": -1,
+                "msg": str(e),
+                "data": None
+            }
+        except Exception as e:
+            print(f"[ERROR] 处理响应失败：{e}")
+            return {
+                "code": -1,
+                "msg": str(e),
+                "data": None
+            }
+    
     # ============ 文件管理功能 ============
     
     def upload_file(self, file_path: str, purpose: str = "user_file") -> dict:
@@ -424,18 +521,43 @@ class CozeBot:
 
 
 # 便捷函数
-def ask_coze(question: str) -> str:
+def ask_coze(question: str, file_path: str = None) -> str:
     """
-    快速调用 Coze API
+    快速调用 Coze API（支持文件）
     
     Args:
         question: 问题内容
+        file_path: 文件路径（可选，如果提供会先上传文件并在对话中使用）
     
     Returns:
         str: 回复内容
+    
+    使用示例:
+        # 只发送文字问题
+        reply = ask_coze("你是谁？")
+        
+        # 带文件的问题
+        reply = ask_coze("请帮我处理这张图片", "/path/to/image.jpg")
     """
     bot = CozeBot()
-    return bot.get_chat_response(question)
+    
+    # 如果提供了文件，先上传
+    if file_path:
+        file_id = bot.upload_and_get_id(file_path)
+        if not file_id:
+            return f"文件上传失败，无法处理文件：{file_path}"
+        
+        # 使用带文件的对话方法
+        result = bot.chat_with_file(question, file_id)
+        
+        if result.get("code") == 0 and result.get("data"):
+            return result["data"].get("content", "未获取到回复内容")
+        else:
+            error_msg = result.get("msg", "未知错误")
+            return f"调用失败：{error_msg}"
+    else:
+        # 没有文件，直接调用
+        return bot.get_chat_response(question)
 
 
 def upload_file_to_coze(file_path: str) -> str:
