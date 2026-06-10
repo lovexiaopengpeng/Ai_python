@@ -222,6 +222,42 @@ def update_user_name(user_info: UpdateUserName):
         
     return userDic
 
+# 获取数据库所有用户信息
+@router.post("/all_users", summary="获取所有用户信息")
+def get_all_user_info():
+    """
+    获取所有用户信息
+
+    Returns:
+        dict: 所有用户信息
+    """
+    array = []
+    user_dic = {}
+    user_dic["success"] = False
+    user_dic["data"] = array
+    user_dic["error"] = ''
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        db_execute(cursor, "SELECT * FROM users")
+        results = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description]
+        cursor.close()
+        conn.close()
+        for row in results:
+            user_data = dict(zip(columns, row))
+            array.append(user_data)
+        
+        user_dic["success"] = True
+        print(f"[DEBUG] 查询到所有用户数据：{array}")
+    except Exception as e:
+        print(f"[ERROR] 查询数据库失败：{e}")
+        user_dic["error"] = str(e)
+    
+    return user_dic
+
+
+
 def send_wechat_message(content: str, msg_type: str = "text", payload: dict = None) -> dict:
     """
     发送企业微信消息
