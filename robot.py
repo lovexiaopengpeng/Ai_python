@@ -79,8 +79,7 @@ class CozeBot:
     
     def get_chat_messages(self, conversation_id: str, chat_id: str) -> dict:
         """
-        获取对话消息（用于获取机器人回复）
-        使用 GET 请求获取消息
+        获取对话消息列表（查看对话消息详情接口）
         
         Args:
             conversation_id: 会话 ID
@@ -89,45 +88,56 @@ class CozeBot:
         Returns:
             dict: 对话消息列表
         """
-        # 尝试不同的 API 端点
-        urls_to_try = [
-            f"{self.base_url}/chat/message",
-            f"{self.base_url}/message",
-            f"{self.base_url}/chat/retrieve",
-        ]
-        
-        payload = {
+        url = f"{self.base_url}/chat/message/list"
+        params = {
             "conversation_id": conversation_id,
             "chat_id": chat_id
         }
         
-        for url in urls_to_try:
-            try:
-                # 尝试 POST 请求
-                response = requests.post(url, headers=self.headers, json=payload)
-                if response.status_code == 200:
-                    result = response.json()
-                    print(f"[DEBUG] 对话消息响应 (POST {url}): {result}")
-                    return result
-            except Exception:
-                continue
-        
-        # 如果 POST 都失败，尝试 GET 请求
         try:
-            get_url = f"{self.base_url}/chat/message?conversation_id={conversation_id}&chat_id={chat_id}"
-            response = requests.get(get_url, headers=self.headers)
-            if response.status_code == 200:
-                result = response.json()
-                print(f"[DEBUG] 对话消息响应 (GET): {result}")
-                return result
+            response = requests.get(url, headers=self.headers, params=params)
+            response.raise_for_status()
+            result = response.json()
+            print(f"[DEBUG] 对话消息响应：{result}")
+            return result
         except Exception as e:
-            print(f"[DEBUG] GET 请求失败：{e}")
+            print(f"[ERROR] 获取对话消息失败：{e}")
+            return {
+                "code": -1,
+                "msg": str(e),
+                "data": None
+            }
+    
+    def get_chat_detail(self, conversation_id: str, chat_id: str) -> dict:
+        """
+        获取对话详情（查看对话详情接口）
         
-        return {
-            "code": -1,
-            "msg": "所有 API 端点都失败",
-            "data": None
+        Args:
+            conversation_id: 会话 ID
+            chat_id: 聊天 ID
+        
+        Returns:
+            dict: 对话详情
+        """
+        url = f"{self.base_url}/chat/retrieve"
+        params = {
+            "conversation_id": conversation_id,
+            "chat_id": chat_id
         }
+        
+        try:
+            response = requests.get(url, headers=self.headers, params=params)
+            response.raise_for_status()
+            result = response.json()
+            print(f"[DEBUG] 对话详情响应：{result}")
+            return result
+        except Exception as e:
+            print(f"[ERROR] 获取对话详情失败：{e}")
+            return {
+                "code": -1,
+                "msg": str(e),
+                "data": None
+            }
     
     def wait_for_completion(self, conversation_id: str, chat_id: str, timeout: int = 30, interval: int = 1) -> dict:
         """
@@ -145,26 +155,60 @@ class CozeBot:
         start_time = time.time()
         
         while time.time() - start_time < timeout:
-            # 获取消息
-            messages_result = self.get_chat_messages(conversation_id, chat_id)
+            # 先查看对话详情，检查状态
+            detail_result = self.get_chat_detail(conversation_id, chat_id)
             
-            if messages_result.get("code") == 0:
-                data = messages_result.get("data", {})
-                messages = data.get("items", [])
+            if detail_result.get("code") == 0:
+                data = detail_result.get("data", {})
+                status = data.get("status", "")
                 
-                # 检查是否有 assistant 的回复
-                for msg in messages:
-                    if msg.get("role") == "assistant" and msg.get("type") == "answer":
+                print(f"[DEBUG] 对话状态：{status}")
+                
+                # 检查是否为终态
+                if status in ["completed", "required_action", "canceled", "failed"]:
+                    print(f"[DEBUG] 对话已达到终态：{status}")
+                    
+                    # 获取消息列表
+                    messages_result = self.get_chat_messages(conversation_id, chat_id)
+                    
+                    if messages_result.get("code") == 0:
+                        # messages_data 可能是列表或字典
+                        messages_data = messages_result.get("data", {})
+                        
+                        # 如果是列表，直接使用；如果是字典，获取 items
+                        if isinstance(messages_data, list):
+                            messages = messages_data
+                        else:
+                            messages = messages_data.get("items", [])
+                        
+                        # 查找 assistant 的回复
+                        for msg in messages:
+                            if msg.get("role") == "assistant" and msg.get("type") == "answer":
+                                return {
+                                    "code": 0,
+                                    "msg": "success",
+                                    "data": {
+                                        "content": msg.get("content", ""),
+                                        "conversation_id": conversation_id,
+                                        "chat_id": chat_id,
+                                        "status": status,
+                                        "messages": messages
+                                    }
+                                }
+                        
+                        # 如果没有找到 answer 类型的消息，返回所有消息
                         return {
                             "code": 0,
                             "msg": "success",
                             "data": {
-                                "content": msg.get("content", ""),
                                 "conversation_id": conversation_id,
                                 "chat_id": chat_id,
+                                "status": status,
                                 "messages": messages
                             }
                         }
+                    else:
+                        return messages_result
             
             # 等待一段时间后再次检查
             time.sleep(interval)
@@ -175,14 +219,14 @@ class CozeBot:
             "data": None
         }
     
-    def get_chat_response(self, content: str, user_id: str = None, wait: bool = False) -> str:
+    def get_chat_response(self, content: str, user_id: str = None, wait: bool = True) -> str:
         """
         调用 Coze API 并获取回复内容
         
         Args:
             content: 用户输入的问题或内容
             user_id: 用户 ID（可选）
-            wait: 是否等待回复完成（目前 Coze v3 API 不支持轮询获取，默认 False）
+            wait: 是否等待回复完成（默认 True）
         
         Returns:
             str: 机器人的回复内容
@@ -202,8 +246,23 @@ class CozeBot:
         
         print(f"[DEBUG] 会话 ID: {conversation_id}, 聊天 ID: {chat_id}, 状态：{status}")
         
-        # 返回对话创建成功的信息
-        return f"对话已创建 (ID: {chat_id})，机器人正在处理中..."
+        # 如果不等待，直接返回基本信息
+        if not wait:
+            return f"对话已创建 (ID: {chat_id})，机器人正在处理中..."
+        
+        # 等待并获取回复
+        print(f"[DEBUG] 等待机器人回复...")
+        final_result = self.wait_for_completion(conversation_id, chat_id)
+        
+        if final_result.get("code") == 0 and final_result.get("data"):
+            reply_content = final_result["data"].get("content", "")
+            if reply_content:
+                print(f"[DEBUG] 获取到回复：{reply_content}")
+                return reply_content
+            else:
+                return f"对话完成 (ID: {chat_id})，但未获取到回复内容"
+        else:
+            return f"等待回复超时或失败：{final_result.get('msg', '')}"
     
     def chat_with_response(self, content: str, user_id: str = None) -> dict:
         """
