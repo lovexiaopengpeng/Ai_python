@@ -75,34 +75,66 @@ def db_execute(cursor, query, params=None):
             params = (params,)
         cursor.execute(query, params)
 
-@router.post("/user/{userId}")
-def get_user_info(userId:str):
+class UserInfo(BaseModel):
+    userid: str
+
+@router.post("/user_info", summary="查询用户信息")
+def get_user_info(user_info: UserInfo) -> dict:
+    """
+    根据 userid 查询用户信息
+    
+    Args:
+        user_info: 用户 ID 请求体
+    
+    Returns:
+        dict: 用户信息
+    """
     userDic = {}
-    array = []
-    array.append(userDic)
-    f = open('user.json', 'w')
-    read_dada = f.read()
-    f.close()
     
-    with open('user.json', 'w') as f2:
-        read_dada2 = f2.read()
-        pos = f2.tell()
-
-    
-    userDic = {"userid":userId,"username":"张三"}
-
-    response = requests.post(WEBHOOK_URL, json=userDic)
     try:
-        print(response.json())
-        print(response.status_code)
-        userDic["response"] = response.json()
-        userDic["success"] = True
-        return userDic
+        # 连接数据库
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 查询用户数据
+        db_execute(
+            cursor,
+            "SELECT * FROM users WHERE userid = %s",
+            (user_info.userid,)
+        )
+        
+        # 获取结果
+        result = cursor.fetchone()
+        
+        # 关闭连接
+        cursor.close()
+        conn.close()
+        
+        if result:
+            # 获取列名
+            columns = [desc[0] for desc in cursor.description]
+            # 转换为字典
+            userDic = dict(zip(columns, result))
+            userDic["success"] = True
+            print(f"[DEBUG] 查询到用户数据：{userDic}")
+        else:
+            userDic = {
+                "userid": user_info.userid,
+                "username": None,
+                "success": False,
+                "error": "用户不存在"
+            }
+            print(f"[DEBUG] 用户不存在：{user_info.userid}")
+            
     except Exception as e:
-        print(e)
-        userDic["error"] = str(e)
-        userDic["success"] = False
-        return userDic
+        print(f"[ERROR] 查询数据库失败：{e}")
+        userDic = {
+            "userid": user_info.userid,
+            "success": False,
+            "error": str(e)
+        }
+    
+    return userDic
     
 
 
