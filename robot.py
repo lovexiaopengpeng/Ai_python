@@ -12,6 +12,7 @@ class CozeBot:
     def __init__(self):
         """初始化配置"""
         self.base_url = "https://api.coze.cn/v3"
+        self.files_url = "https://api.coze.cn/v1/files"
         self.token = "pat_vcDlPW4d6HgpvRL890LQEhMwkaNCeq4aOICrSozLJfoIDKTpemqgq3KpLawTOAHg"
         self.bot_id = "7649684924001648694"
         self.user_id = "123456789"
@@ -300,6 +301,127 @@ class CozeBot:
             }
         else:
             return final_result
+    
+    # ============ 文件管理功能 ============
+    
+    def upload_file(self, file_path: str, purpose: str = "user_file") -> dict:
+        """
+        上传文件到 Coze（上传文件接口）
+        
+        Args:
+            file_path: 本地文件路径
+            purpose: 文件用途（默认："user_file"）
+        
+        Returns:
+            dict: 上传结果，包含 file_id 等信息
+        
+        使用说明:
+            - 消息中无法直接使用本地文件，需要先上传到扣子编程
+            - 上传后可在消息中通过指定 file_id 的方式使用此文件
+            - 最大文件大小：512 MB
+            - 文件格式：支持图片、文档、PDF 等常见格式
+        """
+        import os
+        
+        # 检查文件是否存在
+        if not os.path.exists(file_path):
+            return {
+                "code": -1,
+                "msg": f"文件不存在：{file_path}",
+                "data": None
+            }
+        
+        url = f"{self.files_url}/upload"
+        
+        # 准备文件数据
+        files = {
+            "file": open(file_path, "rb")
+        }
+        
+        data = {
+            "purpose": purpose
+        }
+        
+        # 文件上传不需要 Content-Type header，requests 会自动设置
+        upload_headers = {
+            "Authorization": f"Bearer {self.token}"
+        }
+        
+        try:
+            response = requests.post(url, headers=upload_headers, files=files, data=data)
+            response.raise_for_status()
+            result = response.json()
+            print(f"[DEBUG] 文件上传响应：{result}")
+            return result
+        except Exception as e:
+            print(f"[ERROR] 文件上传失败：{e}")
+            return {
+                "code": -1,
+                "msg": str(e),
+                "data": None
+            }
+        finally:
+            # 确保文件关闭
+            if "file" in files:
+                files["file"].close()
+    
+    def get_file_info(self, file_id: str) -> dict:
+        """
+        查看文件详情（查看文件详情接口）
+        
+        Args:
+            file_id: 文件 ID
+        
+        Returns:
+            dict: 文件详情信息
+        
+        返回字段说明:
+            - id: 文件 ID
+            - bytes: 文件大小（字节）
+            - content_type: 文件类型
+            - file_name: 文件名
+            - purpose: 文件用途
+            - upload_at: 上传时间
+        """
+        url = f"{self.files_url}/retrieve"
+        params = {
+            "file_id": file_id
+        }
+        
+        try:
+            response = requests.get(url, headers=self.headers, params=params)
+            response.raise_for_status()
+            result = response.json()
+            print(f"[DEBUG] 文件详情响应：{result}")
+            return result
+        except Exception as e:
+            print(f"[ERROR] 获取文件详情失败：{e}")
+            return {
+                "code": -1,
+                "msg": str(e),
+                "data": None
+        }
+    
+    def upload_and_get_id(self, file_path: str) -> str:
+        """
+        上传文件并返回 file_id（便捷方法）
+        
+        Args:
+            file_path: 本地文件路径
+        
+        Returns:
+            str: file_id（上传失败返回 None）
+        """
+        result = self.upload_file(file_path)
+        
+        if result.get("code") == 0 and result.get("data"):
+            file_id = result["data"].get("id")
+            print(f"[DEBUG] 文件上传成功，file_id: {file_id}")
+            return file_id
+        else:
+            error_msg = result.get("msg", "未知错误")
+            print(f"[ERROR] 文件上传失败：{error_msg}")
+            return None
 
 
 # 便捷函数
@@ -315,6 +437,34 @@ def ask_coze(question: str) -> str:
     """
     bot = CozeBot()
     return bot.get_chat_response(question)
+
+
+def upload_file_to_coze(file_path: str) -> str:
+    """
+    快速上传文件到 Coze
+    
+    Args:
+        file_path: 本地文件路径
+    
+    Returns:
+        str: file_id（上传失败返回 None）
+    """
+    bot = CozeBot()
+    return bot.upload_and_get_id(file_path)
+
+
+def get_coze_file_info(file_id: str) -> dict:
+    """
+    快速获取文件详情
+    
+    Args:
+        file_id: 文件 ID
+    
+    Returns:
+        dict: 文件详情信息
+    """
+    bot = CozeBot()
+    return bot.get_file_info(file_id)
 
 
 # 测试代码
@@ -340,3 +490,34 @@ if __name__ == "__main__":
     print("\n测试 3: 使用便捷函数（不等待回复）")
     answer = ask_coze("今天天气怎么样？")
     print(f"回答：{answer}")
+    
+    # 测试 4: 文件上传
+    print("\n" + "=" * 50)
+    print("测试文件上传功能")
+    print("=" * 50)
+    
+    test_file_path = "/Users/zlhh/Desktop/AI+APP/后台/test_upload.txt"
+    print(f"\n测试 4: 上传文件 {test_file_path}")
+    file_id = bot.upload_and_get_id(test_file_path)
+    if file_id:
+        print(f"✅ 文件上传成功，file_id: {file_id}")
+        
+        # 测试 5: 获取文件详情
+        print(f"\n测试 5: 获取文件详情 (file_id: {file_id})")
+        file_info = bot.get_file_info(file_id)
+        print(f"文件详情：{json.dumps(file_info, ensure_ascii=False, indent=2)}")
+    else:
+        print("❌ 文件上传失败")
+    
+    # 测试 6: 使用便捷函数上传文件
+    print(f"\n测试 6: 使用便捷函数上传文件")
+    file_id_2 = upload_file_to_coze(test_file_path)
+    if file_id_2:
+        print(f"✅ 便捷函数上传成功，file_id: {file_id_2}")
+        
+        # 测试 7: 使用便捷函数获取文件详情
+        print(f"\n测试 7: 使用便捷函数获取文件详情")
+        info = get_coze_file_info(file_id_2)
+        print(f"文件信息：{json.dumps(info, ensure_ascii=False, indent=2)}")
+    else:
+        print("❌ 便捷函数上传失败")
