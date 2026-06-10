@@ -99,7 +99,7 @@ def get_user_info(user_info: UserInfo) -> dict:
         # 查询用户数据
         db_execute(
             cursor,
-            "SELECT * FROM users WHERE userid = %s",
+            "SELECT * FROM users WHERE user_id = %s",
             (user_info.userid,)
         )
         

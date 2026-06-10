@@ -4,8 +4,8 @@
 
 - **服务地址**: `http://111.230.110.33`
 - **本地地址**: `http://localhost:8000`
-- **文档版本**: v1.2
-- **更新时间**: 2026-06-04
+- **文档版本**: v1.3
+- **更新时间**: 2026-06-05
 
 ---
 
@@ -195,6 +195,66 @@
   "success": true,
   "message": "账户注销成功"
 }
+```
+
+---
+
+### 7. 查询用户信息
+
+**接口地址**: `POST /user_info`
+
+**功能描述**: 根据 userid 查询用户的完整信息（需要管理员权限）
+
+**请求体**:
+```json
+{
+  "userid": "string (用户 ID，必填)"
+}
+```
+
+**请求参数说明**:
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| userid | string | 是 | 用户 ID |
+
+**成功响应**:
+```json
+{
+  "userid": "34442",
+  "username": "张三",
+  "email": "zhangsan@example.com",
+  "phone": "13800138000",
+  "created_at": "2024-01-01 12:00:00",
+  "last_login": "2026-06-05 10:30:00",
+  "success": true
+}
+```
+
+**用户不存在响应**:
+```json
+{
+  "userid": "34442",
+  "username": null,
+  "success": false,
+  "error": "用户不存在"
+}
+```
+
+**查询失败响应**:
+```json
+{
+  "userid": "34442",
+  "success": false,
+  "error": "(1054, \"Unknown column 'user_id' in 'where clause'\")"
+}
+```
+
+**使用示例**:
+```bash
+# 查询用户信息
+curl -X POST http://111.230.110.33/user_info \
+  -H "Content-Type: application/json" \
+  -d '{"userid": "34442"}'
 ```
 
 ---
